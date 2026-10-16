@@ -21,6 +21,10 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 3. Klik **Load unpacked**, pilih folder `extension/`.
 4. Buka tab baru.
 
+## Aistim.sync
+
+Pilihan Tampilan ketiga. Isinya HTML dari `data/sync.html` di repo ini (sekarang "Hallo"). Edit berkas itu lalu push ke `main`; extension mengambilnya saat online dan menyimpannya untuk offline, tanpa pasang ulang. HTML dan CSS berjalan, skrip tidak (iframe sandbox).
+
 ## Mengubah tampilan Start
 
 Halaman `extension/icu.html` memakai Alpine.js (build CSP, `extension/vendor/alpine.js`) dan Tailwind CSS (`extension/tailwind.css`, hasil build). Setelah mengubah class di `icu.html` atau `app.js`, jalankan `sh tools/build.sh`.

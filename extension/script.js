@@ -21,9 +21,9 @@ window.addEventListener("message", (e) => {
   if (e.origin === location.origin && e.data && e.data.aistim === "board") location.reload();
 });
 
-function showStart() {
+function showStart(page = "icu.html") {
   const f = document.createElement("iframe");
-  f.src = "icu.html";
+  f.src = page;
   f.style.cssText = "position:fixed;inset:0;width:100%;height:100%;border:0";
   document.body.replaceChildren(f);
 }
@@ -325,6 +325,7 @@ $("form-settings").addEventListener("submit", async () => {
     await store.set("settings", settings);
   }
   if (settings.tampilan === "start") return showStart();
+  if (settings.tampilan === "sync") return showStart("sync.html");
   applyBackground();
   tick();
 });
@@ -333,6 +334,7 @@ $("form-settings").addEventListener("submit", async () => {
   const s = await store.get("settings", {});
   settings = { ...DEFAULT_SETTINGS, ...s };
   if (settings.tampilan === "start") return showStart();
+  if (settings.tampilan === "sync") return showStart("sync.html");
   tick();
   setInterval(tick, 1000);
   initQuote();
