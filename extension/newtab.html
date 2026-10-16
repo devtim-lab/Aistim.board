@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <button id="btn-settings" class="gear" type="button" title="Pengaturan" aria-label="Pengaturan">⚙</button>
+
   <main class="board">
     <section class="hero">
       <div id="clock" class="clock">00:00</div>
@@ -25,8 +27,52 @@
         <input id="todo-input" type="text" placeholder="Tambah tugas, tekan Enter" autocomplete="off" required>
       </form>
       <ul id="todo-list"></ul>
+      <div class="todo-tools">
+        <button id="btn-export" type="button">Ekspor</button>
+        <button id="btn-import" type="button">Impor</button>
+        <button id="btn-clear-done" type="button">Hapus yang selesai</button>
+        <input id="file-import" type="file" accept="application/json,.json" hidden>
+      </div>
+      <p id="todo-msg" class="msg" role="status"></p>
     </section>
   </main>
+
+  <dialog id="dlg-settings">
+    <form method="dialog" id="form-settings">
+      <h2>Pengaturan</h2>
+
+      <label>Nama
+        <input id="set-name" type="text" maxlength="30" placeholder="Opsional, dipakai di sapaan" autocomplete="off">
+      </label>
+
+      <label class="row">
+        <input id="set-24h" type="checkbox"> Format jam 24 jam
+      </label>
+
+      <label>Latar
+        <select id="set-bg">
+          <option value="harian">Berganti tiap hari</option>
+          <option value="warna">Pilih warna</option>
+          <option value="gambar">Gambar sendiri</option>
+        </select>
+      </label>
+
+      <label id="row-warna" hidden>Warna
+        <select id="set-grad"></select>
+      </label>
+
+      <div id="row-gambar" hidden>
+        <input id="set-img" type="file" accept="image/*">
+        <small id="img-info"></small>
+      </div>
+
+      <menu>
+        <button value="cancel" type="button" id="btn-cancel">Batal</button>
+        <button value="ok" type="submit" id="btn-save">Simpan</button>
+      </menu>
+    </form>
+  </dialog>
+
   <script src="script.js"></script>
 </body>
 </html>

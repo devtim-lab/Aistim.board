@@ -66,3 +66,75 @@ body {
   opacity: 0.6;
 }
 #todo-list button:hover { opacity: 1; }
+
+/* ---- v0.2 ---- */
+.gear {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+.gear:hover { background: rgba(0, 0, 0, 0.55); }
+
+#todo-list li input.edit {
+  flex: 1;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  font-size: 15px;
+  outline: none;
+}
+
+.todo-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.todo-tools button {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: none;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+}
+.todo-tools button:hover { background: rgba(255, 255, 255, 0.12); }
+.msg { min-height: 18px; margin: 8px 0 0; font-size: 13px; opacity: 0.85; }
+
+dialog {
+  width: min(92vw, 380px);
+  padding: 20px;
+  border: 0;
+  border-radius: 14px;
+  background: #1f2937;
+  color: #fff;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+dialog h2 { margin: 0 0 14px; font-size: 18px; }
+dialog label { display: block; margin-bottom: 14px; font-size: 14px; }
+dialog label.row { display: flex; align-items: center; gap: 8px; }
+dialog input[type=text], dialog select {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 15px;
+}
+dialog small { display: block; margin-top: 6px; opacity: 0.7; }
+dialog menu { display: flex; justify-content: flex-end; gap: 8px; margin: 18px 0 0; padding: 0; }
+dialog menu button {
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+#btn-save { background: #2a5298; color: #fff; }
+#btn-cancel { background: #374151; color: #fff; }

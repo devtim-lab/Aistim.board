@@ -2,12 +2,15 @@
 
 Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard pribadi. Terinspirasi dari [Muslim Board](https://github.com/novalagung/muslimboard).
 
-## Fitur (v0.1)
+## Fitur (v0.2)
 
-- Jam dan tanggal (bahasa Indonesia)
-- Sapaan sesuai waktu (pagi/siang/sore/malam)
-- Kutipan harian dan warna latar yang berganti per hari
-- Daftar tugas (tambah, centang, hapus), tersimpan di `chrome.storage.local`
+- Jam dan tanggal (bahasa Indonesia), format 24 jam atau 12 jam
+- Sapaan sesuai waktu, dengan nama Anda (opsional)
+- Kutipan harian
+- Latar: berganti tiap hari, pilih warna, atau gambar sendiri (otomatis diperkecil)
+- Daftar tugas: tambah, centang, ubah (klik ✎ atau klik ganda), hapus, hapus yang selesai
+- Ekspor / impor tugas (JSON), impor melewati duplikat
+- Pengaturan lewat tombol ⚙ di kanan atas; semua data tersimpan di `chrome.storage.local`
 
 ## Menjalankan secara lokal
 
@@ -16,9 +19,11 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 3. Klik **Load unpacked**, pilih folder `extension/`.
 4. Buka tab baru.
 
+## Rilis
+
+Naikkan `version` di `extension/manifest.json` lalu push ke `main`; workflow Release membuat `Aistim-Board-<versi>.zip`.
+
 ## Rencana berikutnya
 
-- Latar gambar kustom
-- Cuaca / lokasi
-- Edit tugas, impor/ekspor
-- Pengaturan bahasa dan nama
+- Cuaca / lokasi (butuh izin tambahan)
+- Kutipan sendiri
