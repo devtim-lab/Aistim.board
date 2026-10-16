@@ -82,14 +82,27 @@
       </div>
 
       <div id="tab-2" class="tab-panel" hidden>
-        <div class="views-box">
-          <div class="views-title">Tampilan buatan sendiri</div>
-          <ul id="view-list"></ul>
+        <div id="menu-table">
+          <table class="crud">
+            <thead><tr><th>#</th><th>Menu</th><th>Aksi</th></tr></thead>
+            <tbody id="view-list"></tbody>
+          </table>
           <div class="views-add">
             <input id="new-view" type="text" maxlength="30" placeholder="Nama menu baru" autocomplete="off">
             <button type="button" id="btn-add-view">Tambah</button>
           </div>
-          <small>Setelah ditambah, pilih menunya di tab Umum → Tampilan. Isi HTML diedit lewat tautan Edit di footer menu itu.</small>
+          <small>Pakai = pilih sebagai tampilan (lalu tekan Simpan di bawah). Edit = ubah HTML-nya.</small>
+        </div>
+
+        <div id="menu-editor" hidden>
+          <div id="ed-title" class="views-title"></div>
+          <textarea id="ed-text" spellcheck="false" autocapitalize="off"></textarea>
+          <div class="views-add">
+            <span id="ed-msg"></span>
+            <button type="button" id="ed-reset" hidden>Kembalikan</button>
+            <button type="button" id="ed-cancel">Batal</button>
+            <button type="button" id="ed-save" class="pri">Simpan HTML</button>
+          </div>
         </div>
       </div>
 

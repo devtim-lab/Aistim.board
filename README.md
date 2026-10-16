@@ -36,7 +36,7 @@ Di halaman Aistim.sync (footer): **Edit** (editor langsung, tersimpan di perangk
 
 ## Tampilan buatan sendiri
 
-Di Pengaturan → tab **Menu**: tambah tampilan baru (nama bebas, maksimal 20), ubah nama, atau hapus. Pilih tampilannya di daftar **Tampilan**. Isi HTML diedit lewat tautan **Edit** di footer tampilan itu (juga ada Salin, Unduh, Impor file). Semua tersimpan di perangkat (`chrome.storage.local`), tanpa upload dan tanpa pasang ulang.
+Di Pengaturan → tab **Menu** ada tabel CRUD: tambah menu baru (maksimal 20), pakai, edit HTML, ubah nama, hapus. Pilih tampilannya di daftar **Tampilan**. Isi HTML diedit lewat tautan **Edit** di footer tampilan itu (juga ada Salin, Unduh, Impor file). Semua tersimpan di perangkat (`chrome.storage.local`), tanpa upload dan tanpa pasang ulang.
 
 ## Mengubah tampilan Start
 

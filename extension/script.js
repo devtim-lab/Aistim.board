@@ -293,6 +293,17 @@ function resizeImage(file, maxSide = 1920) {
 // ---------- Tampilan buatan sendiri ----------
 const BAWAAN = [["board", "Board"], ["start", "Aistim"], ["sync", "Aistim.sync"]];
 
+let editing = null; // { kind: "sync" | "view", id }
+
+function btn(text, fn, danger) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = text;
+  if (danger) b.className = "danger";
+  b.addEventListener("click", fn);
+  return b;
+}
+
 function renderViews(pilih) {
   const sel = $("set-view");
   sel.textContent = "";
@@ -304,43 +315,104 @@ function renderViews(pilih) {
   });
   sel.value = pilih;
   if (sel.value !== pilih) sel.value = "board";
+  const aktif = sel.value;
 
-  const ul = $("view-list");
-  ul.textContent = "";
-  if (!views.length) {
-    const li = document.createElement("li");
-    li.textContent = "Belum ada.";
-    li.style.opacity = "0.6";
-    ul.append(li);
-  }
-  views.forEach((v, i) => {
-    const li = document.createElement("li");
-    const nama = document.createElement("span");
-    nama.textContent = v.nama;
-    const ren = document.createElement("button");
-    ren.type = "button";
-    ren.textContent = "Ubah nama";
-    ren.addEventListener("click", async () => {
-      const baru = (prompt("Nama tampilan:", v.nama) || "").trim().slice(0, 30);
-      if (!baru) return;
-      views[i].nama = baru;
-      await store.set("views", views);
-      renderViews($("set-view").value);
-    });
-    const del = document.createElement("button");
-    del.type = "button";
-    del.textContent = "Hapus";
-    del.addEventListener("click", async () => {
-      if (!confirm('Hapus tampilan "' + v.nama + '"?')) return;
-      const dipilih = $("set-view").value === "v:" + v.id;
-      views.splice(i, 1);
-      await store.set("views", views);
-      renderViews(dipilih ? "board" : $("set-view").value);
-    });
-    li.append(nama, ren, del);
-    ul.append(li);
+  const tb = $("view-list");
+  tb.textContent = "";
+  const baris = [
+    ...BAWAAN.map(([val, nama]) => ({ val, nama, jenis: "Bawaan", sync: val === "sync" })),
+    ...views.map((v, i) => ({ val: "v:" + v.id, nama: v.nama, jenis: "Buatan", i, v })),
+  ];
+  baris.forEach((r, n) => {
+    const tr = document.createElement("tr");
+    if (r.val === aktif) tr.className = "aktif";
+    const c0 = document.createElement("td");
+    c0.textContent = r.val === aktif ? "✓" : String(n + 1);
+    const c1 = document.createElement("td");
+    c1.textContent = r.nama;
+    const sm = document.createElement("small");
+    sm.textContent = r.jenis;
+    c1.append(sm);
+    const c2 = document.createElement("td");
+    c2.className = "aksi";
+    c2.append(btn("Pakai", () => renderViews(r.val)));
+    if (r.sync) c2.append(btn("Edit", () => openEditor({ kind: "sync" })));
+    if (r.v) {
+      c2.append(btn("Edit", () => openEditor({ kind: "view", id: r.v.id })));
+      c2.append(
+        btn("Nama", async () => {
+          const baru = (prompt("Nama menu:", r.v.nama) || "").trim().slice(0, 30);
+          if (!baru) return;
+          views[r.i].nama = baru;
+          await store.set("views", views);
+          renderViews($("set-view").value);
+        })
+      );
+      c2.append(
+        btn(
+          "Hapus",
+          async () => {
+            if (!confirm('Hapus menu "' + r.v.nama + '"?')) return;
+            const dipilih = $("set-view").value === r.val;
+            views.splice(r.i, 1);
+            await store.set("views", views);
+            renderViews(dipilih ? "board" : $("set-view").value);
+          },
+          true
+        )
+      );
+    }
+    tr.append(c0, c1, c2);
+    tb.append(tr);
   });
 }
+
+async function openEditor(target) {
+  editing = target;
+  let html = DEFAULT_VIEW_HTML;
+  if (target.kind === "sync") {
+    html = (await store.get("syncLocal", "")) || (await store.get("syncHtml", "")) || html;
+    $("ed-title").textContent = "Edit HTML: Aistim.sync";
+    $("ed-reset").hidden = !(await store.get("syncLocal", ""));
+  } else {
+    const v = views.find((x) => x.id === target.id);
+    if (!v) return;
+    html = v.html || html;
+    $("ed-title").textContent = "Edit HTML: " + v.nama;
+    $("ed-reset").hidden = true;
+  }
+  $("ed-text").value = html;
+  $("ed-msg").textContent = "";
+  $("menu-table").hidden = true;
+  $("menu-editor").hidden = false;
+  $("ed-text").focus();
+}
+
+function closeEditor() {
+  editing = null;
+  $("menu-editor").hidden = true;
+  $("menu-table").hidden = false;
+}
+
+$("ed-cancel").addEventListener("click", closeEditor);
+$("ed-save").addEventListener("click", async () => {
+  const v = $("ed-text").value;
+  if (!v.trim() || v.length > 500000) return ($("ed-msg").textContent = "Isi kosong atau terlalu besar.");
+  if (editing.kind === "sync") await store.set("syncLocal", v);
+  else {
+    const e = views.find((x) => x.id === editing.id);
+    if (e) e.html = v;
+    await store.set("views", views);
+  }
+  closeEditor();
+  msg("HTML disimpan.");
+});
+$("ed-reset").addEventListener("click", async () => {
+  if (hasChrome) await chrome.storage.local.remove("syncLocal");
+  else localStorage.removeItem("syncLocal");
+  closeEditor();
+  msg("Dikembalikan ke versi GitHub.");
+});
 
 $("btn-add-view").addEventListener("click", async () => {
   const nama = $("new-view").value.trim().slice(0, 30);
@@ -372,6 +444,7 @@ document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () 
 $("btn-settings").addEventListener("click", () => {
   gambarBaru = null;
   showTab(1);
+  closeEditor();
   renderViews(settings.tampilan || "board");
   $("set-name").value = settings.nama || "";
   $("set-24h").checked = !!settings.jam24;
