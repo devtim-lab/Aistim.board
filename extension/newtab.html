@@ -37,6 +37,18 @@
     </section>
   </main>
 
+  <dialog id="dlg-menu">
+    <form method="dialog" id="form-menu">
+      <h2 id="menu-title"></h2>
+      <p id="menu-text" hidden></p>
+      <input id="menu-input" type="text" maxlength="30" autocomplete="off" hidden>
+      <menu>
+        <button type="button" id="menu-cancel">Batal</button>
+        <button type="submit" id="menu-ok">OK</button>
+      </menu>
+    </form>
+  </dialog>
+
   <dialog id="dlg-settings">
     <form method="dialog" id="form-settings">
       <h2>Pengaturan</h2>
@@ -84,14 +96,10 @@
       <div id="tab-2" class="tab-panel" hidden>
         <div id="menu-table">
           <table class="crud">
-            <thead><tr><th>#</th><th>Menu</th><th>Aksi</th></tr></thead>
+            <thead><tr><th>#</th><th>Menu</th><th class="aksi"><button type="button" id="btn-add-view" class="ico pri" title="Tambah menu" aria-label="Tambah menu"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button></th></tr></thead>
             <tbody id="view-list"></tbody>
           </table>
-          <div class="views-add">
-            <input id="new-view" type="text" maxlength="30" placeholder="Nama menu baru" autocomplete="off">
-            <button type="button" id="btn-add-view">Tambah</button>
-          </div>
-          <small>Pakai = pilih sebagai tampilan (lalu tekan Simpan di bawah). Edit = ubah HTML-nya.</small>
+          <small>✓ = pakai sebagai tampilan (lalu tekan Simpan di bawah) · &lt;/&gt; = edit HTML · ✎ = ubah nama · 🗑 = hapus · + = tambah menu.</small>
         </div>
 
         <div id="menu-editor" hidden>

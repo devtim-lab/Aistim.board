@@ -295,14 +295,49 @@ const BAWAAN = [["board", "Board"], ["start", "Aistim"], ["sync", "Aistim.sync"]
 
 let editing = null; // { kind: "sync" | "view", id }
 
-function btn(text, fn, danger) {
+const ICONS = {
+  pakai: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/>',
+  edit: '<path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/>',
+  nama: '<path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/>',
+  hapus: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+};
+
+function btn(name, label, fn, danger) {
   const b = document.createElement("button");
   b.type = "button";
-  b.textContent = text;
-  if (danger) b.className = "danger";
+  b.className = "ico" + (danger ? " danger" : "");
+  b.title = label;
+  b.setAttribute("aria-label", label);
+  b.innerHTML = '<svg viewBox="0 0 24 24">' + ICONS[name] + "</svg>";
   b.addEventListener("click", fn);
   return b;
 }
+
+// Popup kecil serbaguna: tanya teks (tambah/ubah nama) atau konfirmasi (hapus)
+const dlgMenu = $("dlg-menu");
+let menuAksi = null;
+function popup({ judul, teks, nilai, ok, bahaya }) {
+  return new Promise((resolve) => {
+    $("menu-title").textContent = judul;
+    $("menu-text").textContent = teks || "";
+    $("menu-text").hidden = !teks;
+    const inp = $("menu-input");
+    inp.hidden = nilai === undefined;
+    inp.value = nilai || "";
+    $("menu-ok").textContent = ok || "OK";
+    $("menu-ok").className = bahaya ? "danger" : "pri";
+    menuAksi = (batal) => {
+      dlgMenu.close();
+      menuAksi = null;
+      resolve(batal ? null : nilai === undefined ? true : inp.value.trim().slice(0, 30));
+    };
+    dlgMenu.showModal();
+    if (nilai !== undefined) { inp.focus(); inp.select(); }
+  });
+}
+$("menu-cancel").addEventListener("click", () => menuAksi && menuAksi(true));
+dlgMenu.addEventListener("cancel", (e) => { e.preventDefault(); menuAksi && menuAksi(true); });
+$("form-menu").addEventListener("submit", (e) => { e.preventDefault(); menuAksi && menuAksi(false); });
 
 function renderViews(pilih) {
   const sel = $("set-view");
@@ -335,13 +370,13 @@ function renderViews(pilih) {
     c1.append(sm);
     const c2 = document.createElement("td");
     c2.className = "aksi";
-    c2.append(btn("Pakai", () => renderViews(r.val)));
-    if (r.sync) c2.append(btn("Edit", () => openEditor({ kind: "sync" })));
+    c2.append(btn("pakai", "Pakai", () => renderViews(r.val)));
+    if (r.sync) c2.append(btn("edit", "Edit HTML", () => openEditor({ kind: "sync" })));
     if (r.v) {
-      c2.append(btn("Edit", () => openEditor({ kind: "view", id: r.v.id })));
+      c2.append(btn("edit", "Edit HTML", () => openEditor({ kind: "view", id: r.v.id })));
       c2.append(
-        btn("Nama", async () => {
-          const baru = (prompt("Nama menu:", r.v.nama) || "").trim().slice(0, 30);
+        btn("nama", "Ubah nama", async () => {
+          const baru = await popup({ judul: "Ubah nama menu", nilai: r.v.nama, ok: "Simpan" });
           if (!baru) return;
           views[r.i].nama = baru;
           await store.set("views", views);
@@ -350,9 +385,10 @@ function renderViews(pilih) {
       );
       c2.append(
         btn(
+          "hapus",
           "Hapus",
           async () => {
-            if (!confirm('Hapus menu "' + r.v.nama + '"?')) return;
+            if (!(await popup({ judul: "Hapus menu", teks: 'Hapus menu "' + r.v.nama + '" beserta HTML-nya?', ok: "Hapus", bahaya: true }))) return;
             const dipilih = $("set-view").value === r.val;
             views.splice(r.i, 1);
             await store.set("views", views);
@@ -415,20 +451,13 @@ $("ed-reset").addEventListener("click", async () => {
 });
 
 $("btn-add-view").addEventListener("click", async () => {
-  const nama = $("new-view").value.trim().slice(0, 30);
+  if (views.length >= 20) return msg("Maksimal 20 menu.");
+  const nama = await popup({ judul: "Tambah menu", nilai: "", ok: "Tambah" });
   if (!nama) return;
-  if (views.length >= 20) return msg("Maksimal 20 tampilan.");
   const id = Date.now().toString(36);
   views.push({ id, nama, html: DEFAULT_VIEW_HTML });
   await store.set("views", views);
-  $("new-view").value = "";
   renderViews("v:" + id);
-});
-$("new-view").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    $("btn-add-view").click();
-  }
 });
 
 function showTab(n) {
