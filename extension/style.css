@@ -180,3 +180,12 @@ table.crud td.aksi { white-space: nowrap; }
 #dlg-menu menu button.danger { background: #b91c1c; }
 
 dialog menu[hidden] { display: none; }
+
+.gear.key { right: 62px; display: grid; place-items: center; padding: 0; }
+.gear.key svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#dlg-key { max-width: 400px; width: calc(100% - 32px); }
+#key-input { width: 100%; box-sizing: border-box; margin: 8px 0; padding: 10px; border-radius: 8px; border: 0; font: 13px ui-monospace, Menlo, Consolas, monospace; -webkit-text-security: disc; resize: none; }
+#key-state { margin: 0 0 6px; font-size: 14px; }
+#dlg-key menu button { border: 0; border-radius: 8px; padding: 9px 16px; color: #fff; background: #334155; cursor: pointer; }
+#dlg-key menu button.pri { background: #2563eb; }
+#dlg-key menu button.danger { background: #b91c1c; }

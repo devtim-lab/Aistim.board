@@ -21,6 +21,10 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 - `data/` — isi yang bisa diedit tanpa pasang ulang
 - `tools/` — pembuat CSS
 
+## Private key admin
+
+Ikon kunci di pojok kanan atas Board (di sebelah ⚙) menyimpan private key admin Aistim (64 karakter hex atau blok PEM) di `chrome.storage.local` browser itu, tanpa enkripsi. Belum dipakai fitur lain di extension ini. Pakai hanya di perangkat yang dipercaya; tombol Hapus menghapusnya.
+
 ## Menjalankan secara lokal
 
 1. Buka `chrome://extensions`.

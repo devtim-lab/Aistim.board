@@ -556,6 +556,50 @@ $("form-settings").addEventListener("submit", async () => {
   tick();
 });
 
+// ---------- Private key admin (disimpan lokal di browser ini) ----------
+const dlgKey = $("dlg-key");
+function normalKey(v) {
+  v = (v || "").trim();
+  if (/^-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]+-----END [A-Z ]*PRIVATE KEY-----$/.test(v)) return v;
+  const h = v.replace(/^0x/i, "");
+  return /^[0-9a-fA-F]{64}$/.test(h) ? h.toLowerCase() : null;
+}
+async function refreshKeyState() {
+  const k = await store.get("adminKey", "");
+  const ada = typeof k === "string" && k.length > 0;
+  $("key-state").textContent = ada ? "Tersimpan di browser ini (berakhir …" + k.replace(/\s/g, "").slice(-4) + ")." : "Belum ada key tersimpan.";
+  $("key-del").hidden = !ada;
+}
+$("btn-key").addEventListener("click", async () => {
+  $("key-input").value = "";
+  $("key-msg").textContent = "";
+  await refreshKeyState();
+  dlgKey.showModal();
+  $("key-input").focus();
+});
+$("key-cancel").addEventListener("click", () => dlgKey.close());
+$("form-key").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const k = normalKey($("key-input").value);
+  if (!k) return ($("key-msg").textContent = "Format tidak dikenali (64 karakter hex atau blok PEM).");
+  try {
+    await store.set("adminKey", k);
+    const cek = await store.get("adminKey", "");
+    if (cek !== k) throw new Error("tidak terbaca ulang");
+  } catch (err) {
+    return ($("key-msg").textContent = "Gagal menyimpan: " + (err && err.message ? err.message : err));
+  }
+  $("key-input").value = "";
+  dlgKey.close();
+  msg("Private key tersimpan.");
+});
+$("key-del").addEventListener("click", async () => {
+  if (hasChrome) await chrome.storage.local.remove("adminKey");
+  else localStorage.removeItem("adminKey");
+  dlgKey.close();
+  msg("Private key dihapus.");
+});
+
 async function startBoard() {
   tick();
   setInterval(tick, 1000);

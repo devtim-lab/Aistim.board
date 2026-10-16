@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <button id="btn-key" class="gear key" type="button" title="Private key admin" aria-label="Private key admin"><svg viewBox="0 0 24 24"><path d="M15 7a4 4 0 11-3.900 4.900L4 19v2h3v-2h2v-2h2l1.900-1.900A4 4 0 0115 7z"/></svg></button>
   <button id="btn-settings" class="gear" type="button" title="Pengaturan" aria-label="Pengaturan">⚙</button>
 
   <main class="board">
@@ -36,6 +37,22 @@
       <p id="todo-msg" class="msg" role="status"></p>
     </section>
   </main>
+
+  <dialog id="dlg-key">
+    <form method="dialog" id="form-key">
+      <h2>Private key admin</h2>
+      <p id="key-state"></p>
+      <textarea id="key-input" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Tempel private key (64 karakter hex, atau PEM)"></textarea>
+      <small>Disimpan apa adanya di browser ini (tanpa enkripsi). Siapa pun yang bisa membuka profil browser ini bisa membacanya. Pakai hanya di perangkat yang kamu percaya.</small>
+      <small id="key-msg"></small>
+      <menu>
+        <small id="key-spacer" style="margin-right:auto"></small>
+        <button type="button" id="key-del" class="danger" hidden>Hapus</button>
+        <button type="button" id="key-cancel">Batal</button>
+        <button type="submit" id="key-save" class="pri">Simpan</button>
+      </menu>
+    </form>
+  </dialog>
 
   <dialog id="dlg-menu">
     <form method="dialog" id="form-menu">
