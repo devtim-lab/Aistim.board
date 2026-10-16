@@ -122,6 +122,7 @@ $("back").addEventListener("click", async (e) => {
   parent.postMessage({ aistim: "board" }, location.origin);
 });
 
+/*PRO*/
 /* ---------- Upload ke GitHub (hanya Aistim.sync) ---------- */
 if (!VIEW_ID) { $("gh").hidden = false; $("key").hidden = false; }
 
@@ -212,3 +213,4 @@ async function gagalGH(status) {
   else if (status === 404) note("Gagal: repo tidak ditemukan atau token tidak punya akses");
   else note("Gagal: GitHub membalas " + status);
 }
+/*/PRO*/

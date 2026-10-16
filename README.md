@@ -56,7 +56,12 @@ ID tetap `ngihdjhihcflmlajbfkleakcglaefgjk` (dari `key` di `manifest.json`), jad
 
 ## Rilis
 
-Naikkan `version` di `extension/manifest.json` lalu push ke `main`; workflow Release membuat `Aistim-Board-<versi>.zip`.
+Naikkan `version` di `extension/manifest.json` lalu push ke `main`; workflow Release membuat dua berkas:
+
+- `Aistim-Board-<versi>.zip`: versi lengkap (Load unpacked), termasuk ikon private key admin dan upload ke GitHub.
+- `Aistim-Board-store-<versi>.zip`: untuk Chrome Web Store. Dibuat oleh `tools/build-store.py`: tanpa `key` di manifest, tanpa izin `api.github.com`, tanpa fitur kunci admin dan upload/token GitHub. Semua JS ikut terkemas; tidak ada kode jarak jauh, `eval`, atau obfuscation. Yang diambil dari GitHub hanya data (`tiles.json`) dan HTML tanpa script yang tampil di iframe terisolasi.
+
+Kode yang hanya untuk versi lengkap diberi penanda `<!--PRO-->...<!--/PRO-->` (HTML) dan `/*PRO*/...*/PRO*/` (JS); build Web Store membuangnya dan gagal bila masih ada sisa `adminKey`, `ghToken`, atau `api.github.com`.
 
 ## Rencana berikutnya
 

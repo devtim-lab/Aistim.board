@@ -556,6 +556,7 @@ $("form-settings").addEventListener("submit", async () => {
   tick();
 });
 
+/*PRO*/
 // ---------- Private key admin (disimpan lokal di browser ini) ----------
 const dlgKey = $("dlg-key");
 function normalKey(v) {
@@ -599,6 +600,7 @@ $("key-del").addEventListener("click", async () => {
   dlgKey.close();
   msg("Private key dihapus.");
 });
+/*/PRO*/
 
 async function startBoard() {
   tick();
