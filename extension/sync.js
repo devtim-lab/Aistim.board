@@ -60,6 +60,21 @@ $("reset").addEventListener("click", async (e) => {
   local = null;
   render();
 });
+let toast;
+function note(t) {
+  const m = $("msg"), b = $("note");
+  b.textContent = t; b.hidden = false; m.textContent = $("ed").classList.contains("on") ? t : "";
+  clearTimeout(toast); toast = setTimeout(() => { b.hidden = true; if (m.textContent === t) m.textContent = ""; }, 2500);
+}
+async function salin(text) {
+  try { await navigator.clipboard.writeText(text); note("Tersalin"); return; } catch (e) {}
+  const t = document.createElement("textarea"); // cadangan bila clipboard API ditolak
+  t.value = text; document.body.appendChild(t); t.select();
+  let okc = false; try { okc = document.execCommand("copy"); } catch (e) {}
+  t.remove(); note(okc ? "Tersalin" : "Gagal menyalin");
+}
+$("cp").addEventListener("click", (e) => { e.preventDefault(); salin(current()); });
+$("copy2").addEventListener("click", () => salin($("ta").value));
 $("dl").addEventListener("click", (e) => {
   e.preventDefault();
   const url = URL.createObjectURL(new Blob([current()], { type: "text/html" }));
