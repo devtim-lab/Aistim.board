@@ -4,6 +4,7 @@
 const URL_SYNC = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/sync.html";
 const DEFAULT_HTML = '<!doctype html><meta charset="utf-8"><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0f172a;color:#fff;font-family:system-ui"><h1 style="font-weight:300;font-size:64px">Hallo</h1>';
 const $ = (id) => document.getElementById(id);
+const GH = { owner: "devtim-lab", repo: "Aistim.board", path: "data/sync.html", branch: "main" };
 const VIEW_ID = new URLSearchParams(location.search).get("id"); // ada = tampilan buatan sendiri (lokal saja)
 const frame = $("v");
 const ok = (h) => typeof h === "string" && h.length > 0 && h.length < 500000;
@@ -120,3 +121,94 @@ $("back").addEventListener("click", async (e) => {
   await put({ settings: { ...(r || {}), tampilan: "board" } });
   parent.postMessage({ aistim: "board" }, location.origin);
 });
+
+/* ---------- Upload ke GitHub (hanya Aistim.sync) ---------- */
+if (!VIEW_ID) { $("gh").hidden = false; $("key").hidden = false; }
+
+const b64 = (str) => { // UTF-8 -> base64
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+};
+const api = (path, token, opt = {}) =>
+  fetch("https://api.github.com/repos/" + GH.owner + "/" + GH.repo + "/contents/" + path + opt.q, {
+    method: opt.method || "GET",
+    headers: { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" },
+    body: opt.body,
+    cache: "no-store",
+  });
+
+function bukaToken(pesan) {
+  get("ghToken").then((t) => { $("tk-del").hidden = !t; });
+  $("tk-in").value = "";
+  $("tk-msg").textContent = pesan || "";
+  $("tk").classList.add("on");
+  $("tk-in").focus();
+}
+$("key").addEventListener("click", (e) => { e.preventDefault(); bukaToken(); });
+$("tk-cancel").addEventListener("click", () => $("tk").classList.remove("on"));
+$("tk-save").addEventListener("click", async () => {
+  const t = $("tk-in").value.trim();
+  if (!/^[A-Za-z0-9_\-]{20,255}$/.test(t)) { $("tk-msg").textContent = "Token tidak terlihat benar."; return; }
+  if (!(await put({ ghToken: t }))) { $("tk-msg").textContent = "Gagal menyimpan token."; return; }
+  $("tk").classList.remove("on");
+  note("Token disimpan");
+});
+$("tk-del").addEventListener("click", async () => {
+  try { await chrome.storage.local.remove("ghToken"); } catch (e) {}
+  $("tk").classList.remove("on");
+  note("Token dihapus");
+});
+
+let sedangUpload = false;
+$("gh").addEventListener("click", async (e) => {
+  e.preventDefault();
+  if (sedangUpload) return;
+  const token = await get("ghToken");
+  if (!token) return bukaToken("Tempel token dulu, lalu ketuk ikon upload lagi.");
+  sedangUpload = true;
+  note("Mengunggah…");
+  try {
+    const isi = current();
+    for (let coba = 0; coba < 2; coba++) {
+      const cur = await api(GH.path, token, { q: "?ref=" + GH.branch });
+      let sha;
+      if (cur.status === 200) {
+        const j = await cur.json();
+        sha = j.sha;
+        if ((j.content || "").replace(/\s/g, "") === b64(isi)) { note("Sudah sama dengan GitHub"); return; }
+      } else if (cur.status !== 404) {
+        return gagalGH(cur.status);
+      }
+      const res = await api(GH.path, token, {
+        method: "PUT",
+        q: "",
+        body: JSON.stringify({ message: "Aistim.sync: perbarui dari extension", content: b64(isi), branch: GH.branch, ...(sha ? { sha } : {}) }),
+      });
+      if (res.ok) {
+        remote = isi;
+        local = null;
+        await put({ syncHtml: isi });
+        try { await chrome.storage.local.remove("syncLocal"); } catch (x) {}
+        render();
+        note("Terunggah ke GitHub");
+        return;
+      }
+      if (res.status !== 409 && res.status !== 422) return gagalGH(res.status); // 409/422 = sha basi, coba sekali lagi
+    }
+    note("Gagal: berkas berubah di GitHub, coba lagi");
+  } catch (err) {
+    note("Gagal: tidak ada koneksi");
+  } finally {
+    sedangUpload = false;
+  }
+});
+async function gagalGH(status) {
+  if (status === 401) {
+    try { await chrome.storage.local.remove("ghToken"); } catch (e) {}
+    bukaToken("Token ditolak atau kedaluwarsa. Tempel token baru.");
+  } else if (status === 403) note("Gagal: token tidak punya izin (perlu Contents: Read and write)");
+  else if (status === 404) note("Gagal: repo tidak ditemukan atau token tidak punya akses");
+  else note("Gagal: GitHub membalas " + status);
+}

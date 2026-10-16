@@ -34,6 +34,10 @@ Pilihan Tampilan ketiga. Isinya HTML dari `data/sync.html` di repo ini (sekarang
 
 Di halaman Aistim.sync (footer): **Edit** (editor langsung, tersimpan di perangkat dan diutamakan atas versi GitHub), **Salin** (ke clipboard), **Unduh** (simpan jadi `sync.html`), **Impor file** (pakai berkas HTML dari perangkat), **Kembalikan dari GitHub** (hapus salinan lokal).
 
+### Upload ke GitHub (Aistim.sync)
+
+Ikon awan-panah di footer Aistim.sync menyimpan HTML ke `data/sync.html` di repo ini lewat API GitHub, sehingga semua perangkat mengikutinya. Ikon kunci untuk mengisi atau menghapus token. Token dibuat sendiri (fine-grained, hanya repo Aistim.board, izin **Contents: Read and write**) dan hanya tersimpan di browser itu. Repo ini public, jadi isi yang diunggah bisa dibaca siapa saja.
+
 ## Tampilan buatan sendiri
 
 Di Pengaturan → tab **Menu** ada tabel CRUD: tambah menu baru (maksimal 20), pakai, edit HTML, ubah nama, hapus. Pilih tampilannya di daftar **Tampilan**. Isi HTML diedit lewat tautan **Edit** di footer tampilan itu (juga ada Salin, Unduh, Impor file). Semua tersimpan di perangkat (`chrome.storage.local`), tanpa upload dan tanpa pasang ulang.
