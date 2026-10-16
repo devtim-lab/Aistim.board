@@ -1,32 +1,87 @@
-/* Aistim.sync: isi halaman diambil dari data/sync.html di GitHub (tanpa pasang ulang), disimpan untuk offline.
+/* Aistim.sync: HTML diambil dari data/sync.html di GitHub (tanpa pasang ulang) dan disimpan untuk offline.
+   Bisa juga diedit langsung di sini (tersimpan lokal), diunduh, atau diimpor dari berkas. Salinan lokal diutamakan.
    Ditampilkan di iframe sandbox: HTML dan CSS berjalan, skrip tidak. */
 const URL_SYNC = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/sync.html";
 const DEFAULT_HTML = '<!doctype html><meta charset="utf-8"><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0f172a;color:#fff;font-family:system-ui"><h1 style="font-weight:300;font-size:64px">Hallo</h1>';
-const frame = document.getElementById("v");
+const $ = (id) => document.getElementById(id);
+const frame = $("v");
 const ok = (h) => typeof h === "string" && h.length > 0 && h.length < 500000;
+let remote = DEFAULT_HTML; // salinan GitHub / bawaan
+let local = null; // salinan hasil edit di perangkat ini
+const current = () => (ok(local) ? local : remote);
+
+async function get(k) {
+  try { return (await chrome.storage.local.get(k))[k]; } catch (e) { return undefined; }
+}
+async function put(o) {
+  try { await chrome.storage.local.set(o); return true; } catch (e) { return false; }
+}
+function render() {
+  frame.srcdoc = current();
+  $("reset").hidden = !ok(local);
+}
 
 (async function () {
-  let html = DEFAULT_HTML;
-  try {
-    const r = await chrome.storage.local.get("syncHtml");
-    if (ok(r.syncHtml)) html = r.syncHtml;
-  } catch (e) {}
-  frame.srcdoc = html;
+  const r = await get("syncHtml");
+  if (ok(r)) remote = r;
+  const l = await get("syncLocal");
+  if (ok(l)) local = l;
+  render();
   try {
     const res = await fetch(URL_SYNC, { cache: "no-cache" });
     if (!res.ok) return;
     const h = await res.text();
-    if (!ok(h) || h === html) return;
-    try { await chrome.storage.local.set({ syncHtml: h }); } catch (e) {}
-    frame.srcdoc = h;
+    if (!ok(h) || h === remote) return;
+    remote = h;
+    await put({ syncHtml: h });
+    if (!ok(local)) render();
   } catch (e) {}
 })();
 
-document.getElementById("back").addEventListener("click", async (e) => {
+$("edit").addEventListener("click", (e) => {
   e.preventDefault();
-  try {
-    const r = await chrome.storage.local.get("settings");
-    await chrome.storage.local.set({ settings: { ...(r.settings || {}), tampilan: "board" } });
-  } catch (x) {}
+  $("ta").value = current();
+  $("msg").textContent = "";
+  $("ed").classList.add("on");
+  $("ta").focus();
+});
+$("cancel").addEventListener("click", () => $("ed").classList.remove("on"));
+$("save").addEventListener("click", async () => {
+  const v = $("ta").value;
+  if (!ok(v)) { $("msg").textContent = "Isi kosong atau terlalu besar."; return; }
+  if (!(await put({ syncLocal: v }))) { $("msg").textContent = "Gagal menyimpan."; return; }
+  local = v;
+  render();
+  $("ed").classList.remove("on");
+});
+$("reset").addEventListener("click", async (e) => {
+  e.preventDefault();
+  try { await chrome.storage.local.remove("syncLocal"); } catch (x) {}
+  local = null;
+  render();
+});
+$("dl").addEventListener("click", (e) => {
+  e.preventDefault();
+  const url = URL.createObjectURL(new Blob([current()], { type: "text/html" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "sync.html";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+$("imp").addEventListener("click", (e) => { e.preventDefault(); $("file").click(); });
+$("file").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f || f.size > 500000) return;
+  const v = await f.text();
+  if (!ok(v)) return;
+  if (await put({ syncLocal: v })) { local = v; render(); }
+});
+
+$("back").addEventListener("click", async (e) => {
+  e.preventDefault();
+  const r = await get("settings");
+  await put({ settings: { ...(r || {}), tampilan: "board" } });
   parent.postMessage({ aistim: "board" }, location.origin);
 });
