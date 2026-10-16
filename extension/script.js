@@ -446,11 +446,13 @@ async function openEditor(target) {
   $("ed-msg").textContent = "";
   $("menu-table").hidden = true;
   $("menu-editor").hidden = false;
+  $("btn-cancel").closest("menu").hidden = true; // sembunyikan Batal/Simpan utama saat mengedit HTML
   $("ed-text").focus();
 }
 
 function closeEditor() {
   editing = null;
+  $("btn-cancel").closest("menu").hidden = false;
   $("menu-editor").hidden = true;
   $("menu-table").hidden = false;
 }
