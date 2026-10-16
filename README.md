@@ -27,6 +27,10 @@ Pilihan Tampilan ketiga. Isinya HTML dari `data/sync.html` di repo ini (sekarang
 
 Di halaman Aistim.sync (footer): **Edit** (editor langsung, tersimpan di perangkat dan diutamakan atas versi GitHub), **Salin** (ke clipboard), **Unduh** (simpan jadi `sync.html`), **Impor file** (pakai berkas HTML dari perangkat), **Kembalikan dari GitHub** (hapus salinan lokal).
 
+## Tampilan buatan sendiri
+
+Di Pengaturan → **Tampilan buatan sendiri**: tambah tampilan baru (nama bebas, maksimal 20), ubah nama, atau hapus. Pilih tampilannya di daftar **Tampilan**. Isi HTML diedit lewat tautan **Edit** di footer tampilan itu (juga ada Salin, Unduh, Impor file). Semua tersimpan di perangkat (`chrome.storage.local`), tanpa upload dan tanpa pasang ulang.
+
 ## Mengubah tampilan Start
 
 Halaman `extension/icu.html` memakai Alpine.js (build CSP, `extension/vendor/alpine.js`) dan Tailwind CSS (`extension/tailwind.css`, hasil build). Setelah mengubah class di `icu.html` atau `app.js`, jalankan `sh tools/build.sh`.

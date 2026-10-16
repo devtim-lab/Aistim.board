@@ -14,6 +14,9 @@ const GRADIENTS = [
   { nama: "Biru malam", warna: ["#0f2027", "#2c5364"] },
 ];
 
+const DEFAULT_VIEW_HTML = '<!doctype html><meta charset="utf-8"><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0f172a;color:#fff;font-family:system-ui"><h1 style="font-weight:300;font-size:64px">Hallo</h1>';
+let views = []; // tampilan buatan sendiri: [{ id, nama, html }]
+
 const DEFAULT_SETTINGS = { nama: "", jam24: true, latar: "harian", warna: 0, gambar: "", tampilan: "board" };
 
 // Tampilan Start dimuat di iframe agar alamat tab tetap newtab.html (kolom alamat Chrome tetap kosong)
@@ -26,6 +29,15 @@ function showStart(page = "icu.html") {
   f.src = page;
   f.style.cssText = "position:fixed;inset:0;width:100%;height:100%;border:0";
   document.body.replaceChildren(f);
+}
+
+function openCustom() {
+  const id = String(settings.tampilan).slice(2);
+  if (views.some((v) => v.id === id)) return showStart("sync.html?id=" + encodeURIComponent(id));
+  settings.tampilan = "board"; // tampilan sudah dihapus: kembali ke Board
+  store.set("settings", settings);
+  applyBackground();
+  tick();
 }
 
 const $ = (id) => document.getElementById(id);
@@ -278,9 +290,78 @@ function resizeImage(file, maxSide = 1920) {
   });
 }
 
+// ---------- Tampilan buatan sendiri ----------
+const BAWAAN = [["board", "Board"], ["start", "Aistim"], ["sync", "Aistim.sync"]];
+
+function renderViews(pilih) {
+  const sel = $("set-view");
+  sel.textContent = "";
+  [...BAWAAN, ...views.map((v) => ["v:" + v.id, v.nama])].forEach(([val, label]) => {
+    const o = document.createElement("option");
+    o.value = val;
+    o.textContent = label;
+    sel.append(o);
+  });
+  sel.value = pilih;
+  if (sel.value !== pilih) sel.value = "board";
+
+  const ul = $("view-list");
+  ul.textContent = "";
+  if (!views.length) {
+    const li = document.createElement("li");
+    li.textContent = "Belum ada.";
+    li.style.opacity = "0.6";
+    ul.append(li);
+  }
+  views.forEach((v, i) => {
+    const li = document.createElement("li");
+    const nama = document.createElement("span");
+    nama.textContent = v.nama;
+    const ren = document.createElement("button");
+    ren.type = "button";
+    ren.textContent = "Ubah nama";
+    ren.addEventListener("click", async () => {
+      const baru = (prompt("Nama tampilan:", v.nama) || "").trim().slice(0, 30);
+      if (!baru) return;
+      views[i].nama = baru;
+      await store.set("views", views);
+      renderViews($("set-view").value);
+    });
+    const del = document.createElement("button");
+    del.type = "button";
+    del.textContent = "Hapus";
+    del.addEventListener("click", async () => {
+      if (!confirm('Hapus tampilan "' + v.nama + '"?')) return;
+      const dipilih = $("set-view").value === "v:" + v.id;
+      views.splice(i, 1);
+      await store.set("views", views);
+      renderViews(dipilih ? "board" : $("set-view").value);
+    });
+    li.append(nama, ren, del);
+    ul.append(li);
+  });
+}
+
+$("btn-add-view").addEventListener("click", async () => {
+  const nama = $("new-view").value.trim().slice(0, 30);
+  if (!nama) return;
+  if (views.length >= 20) return msg("Maksimal 20 tampilan.");
+  const id = Date.now().toString(36);
+  views.push({ id, nama, html: DEFAULT_VIEW_HTML });
+  await store.set("views", views);
+  $("new-view").value = "";
+  renderViews("v:" + id);
+});
+$("new-view").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    $("btn-add-view").click();
+  }
+});
+
 $("btn-settings").addEventListener("click", () => {
   gambarBaru = null;
-  $("set-view").value = settings.tampilan || "board";
+  renderViews(settings.tampilan || "board");
   $("set-name").value = settings.nama || "";
   $("set-24h").checked = !!settings.jam24;
   $("set-bg").value = settings.latar;
@@ -326,6 +407,7 @@ $("form-settings").addEventListener("submit", async () => {
   }
   if (settings.tampilan === "start") return showStart();
   if (settings.tampilan === "sync") return showStart("sync.html");
+  if (String(settings.tampilan).startsWith("v:")) return openCustom();
   applyBackground();
   tick();
 });
@@ -333,8 +415,10 @@ $("form-settings").addEventListener("submit", async () => {
 (async function init() {
   const s = await store.get("settings", {});
   settings = { ...DEFAULT_SETTINGS, ...s };
+  views = await store.get("views", []);
   if (settings.tampilan === "start") return showStart();
   if (settings.tampilan === "sync") return showStart("sync.html");
+  if (String(settings.tampilan).startsWith("v:")) return openCustom();
   tick();
   setInterval(tick, 1000);
   initQuote();

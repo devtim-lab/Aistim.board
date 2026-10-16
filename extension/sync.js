@@ -4,6 +4,7 @@
 const URL_SYNC = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/sync.html";
 const DEFAULT_HTML = '<!doctype html><meta charset="utf-8"><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0f172a;color:#fff;font-family:system-ui"><h1 style="font-weight:300;font-size:64px">Hallo</h1>';
 const $ = (id) => document.getElementById(id);
+const VIEW_ID = new URLSearchParams(location.search).get("id"); // ada = tampilan buatan sendiri (lokal saja)
 const frame = $("v");
 const ok = (h) => typeof h === "string" && h.length > 0 && h.length < 500000;
 let remote = DEFAULT_HTML; // salinan GitHub / bawaan
@@ -18,10 +19,18 @@ async function put(o) {
 }
 function render() {
   frame.srcdoc = current();
-  $("reset").hidden = !ok(local);
+  $("reset").hidden = VIEW_ID ? true : !ok(local);
 }
 
+async function loadViews() { const v = await get("views"); return Array.isArray(v) ? v : []; }
+
 (async function () {
+  if (VIEW_ID) {
+    const v = (await loadViews()).find((x) => x.id === VIEW_ID);
+    if (v) { document.title = v.nama; remote = ok(v.html) ? v.html : DEFAULT_HTML; }
+    render();
+    return;
+  }
   const r = await get("syncHtml");
   if (ok(r)) remote = r;
   const l = await get("syncLocal");
@@ -38,6 +47,18 @@ function render() {
   } catch (e) {}
 })();
 
+// simpan hasil edit: tampilan buatan sendiri -> entri di daftar views; Aistim.sync -> syncLocal
+async function simpan(v) {
+  if (!VIEW_ID) { const okk = await put({ syncLocal: v }); if (okk) local = v; return okk; }
+  const list = await loadViews();
+  const e = list.find((x) => x.id === VIEW_ID);
+  if (!e) return false;
+  e.html = v;
+  const okk = await put({ views: list });
+  if (okk) remote = v;
+  return okk;
+}
+
 $("edit").addEventListener("click", (e) => {
   e.preventDefault();
   $("ta").value = current();
@@ -49,8 +70,7 @@ $("cancel").addEventListener("click", () => $("ed").classList.remove("on"));
 $("save").addEventListener("click", async () => {
   const v = $("ta").value;
   if (!ok(v)) { $("msg").textContent = "Isi kosong atau terlalu besar."; return; }
-  if (!(await put({ syncLocal: v }))) { $("msg").textContent = "Gagal menyimpan."; return; }
-  local = v;
+  if (!(await simpan(v))) { $("msg").textContent = "Gagal menyimpan."; return; }
   render();
   $("ed").classList.remove("on");
 });
@@ -91,7 +111,7 @@ $("file").addEventListener("change", async (e) => {
   if (!f || f.size > 500000) return;
   const v = await f.text();
   if (!ok(v)) return;
-  if (await put({ syncLocal: v })) { local = v; render(); }
+  if (await simpan(v)) render();
 });
 
 $("back").addEventListener("click", async (e) => {
