@@ -1,3 +1,7 @@
+// Jika ada kesalahan tak terduga, tampilkan di layar supaya kelihatan penyebabnya (terutama di HP).
+window.addEventListener("error", (e) => showError(e.message + (e.lineno ? " (baris " + e.lineno + ")" : "")));
+window.addEventListener("unhandledrejection", (e) => showError(e.reason));
+
 const QUOTES = [
   { text: "Mulailah dari mana kamu berada, gunakan apa yang kamu punya.", author: "Arthur Ashe" },
   { text: "Langkah kecil setiap hari lebih baik daripada lompatan besar sesekali.", author: "Anonim" },
@@ -550,23 +554,49 @@ $("form-settings").addEventListener("submit", async () => {
   tick();
 });
 
-(async function init() {
-  const s = await store.get("settings", {});
-  settings = { ...DEFAULT_SETTINGS, ...s };
-  views = await store.get("views", []);
-  if (!views.length) {
-    try {
-      const b = JSON.parse(localStorage.getItem("views-backup") || "[]");
-      if (Array.isArray(b) && b.length) { views = b; await store.set("views", views); }
-    } catch (e) {}
-  }
-  if (settings.tampilan === "start") return showStart();
-  if (settings.tampilan === "sync") return showStart("menu/sync.html");
-  if (String(settings.tampilan).startsWith("v:")) return openCustom();
+async function startBoard() {
   tick();
   setInterval(tick, 1000);
   initQuote();
   applyBackground();
   todos = await store.get("todos", []);
   render();
+}
+
+function showError(e) {
+  const d = document.createElement("div");
+  d.textContent = "Gagal memuat sebagian: " + (e && e.message ? e.message : e);
+  d.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;padding:10px 12px;border-radius:8px;background:#7f1d1d;color:#fff;font:13px system-ui;z-index:99";
+  document.body.append(d);
+}
+
+(async function init() {
+  tick(); // jam langsung tampil, tidak menunggu penyimpanan
+  try {
+    const s = await store.get("settings", {});
+    settings = { ...DEFAULT_SETTINGS, ...(s && typeof s === "object" ? s : {}) };
+    const v = await store.get("views", []);
+    views = Array.isArray(v) ? v : [];
+    if (!views.length) {
+      try {
+        const b = JSON.parse(localStorage.getItem("views-backup") || "[]");
+        if (Array.isArray(b) && b.length) { views = b; await store.set("views", views); }
+      } catch (e) {}
+    }
+    const t = String(settings.tampilan);
+    if (t === "start") return showStart();
+    if (t === "sync") return showStart("menu/sync.html");
+    if (t.startsWith("v:")) {
+      if (views.some((x) => x.id === t.slice(2))) return openCustom();
+      settings.tampilan = "board"; // menu sudah dihapus: kembali ke Board
+      store.set("settings", settings);
+    }
+  } catch (e) {
+    showError(e);
+  }
+  try {
+    await startBoard();
+  } catch (e) {
+    showError(e);
+  }
 })();
