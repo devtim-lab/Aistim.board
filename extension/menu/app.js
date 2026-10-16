@@ -35,19 +35,21 @@ const okImg=v=>typeof v==='string'&&/^linear-gradient\([#0-9a-z%.,() -]+\)$/i.te
 const okN=v=>Number.isInteger(v)&&v>=1&&v<=6;
 function valid(g){return Array.isArray(g)&&g.length&&g.length<=6&&g.every(x=>Array.isArray(x)&&x.length<=60&&x.every(t=>t&&typeof t.n==='string'&&t.n.length<=30&&okC(t.c)&&(t.i===undefined||I[t.i])&&(t.w===undefined||okN(t.w))&&(t.h===undefined||okN(t.h))&&(t.img===undefined||okImg(t.img))&&(t.href===undefined||/^https:\/\//.test(t.href))))}
 const hm=t=>new Date(t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+const BTN_OFF='grid size-10 cursor-pointer place-items-center rounded-full border-0 bg-white/15 text-white hover:bg-white/25';
+const BTN_ON='grid size-10 cursor-pointer place-items-center rounded-full border-0 bg-[#6a3fc4] text-white hover:bg-[#7c52d6]';
 const GROUP=['grid gap-1 auto-rows-[var(--u)] grid-cols-[repeat(6,var(--u))] shrink-0 md:grid-cols-[repeat(6,var(--u))]',
              'grid gap-1 auto-rows-[var(--u)] grid-cols-[repeat(6,var(--u))] shrink-0 md:grid-cols-[repeat(2,var(--u))]'];
 
 document.addEventListener('alpine:init',()=>{
   Alpine.data('start',()=>({
-    groups:G0, showChat:false, chatLabel:'Tampilkan chat', view:[], msgs:[], log:[], input:'', clock:'',
+    groups:G0, showChat:false, chatLabel:'Tampilkan chat', chatBtn:BTN_OFF, view:[], msgs:[], log:[], input:'', clock:'',
     async init(){
       try{const r=await chrome.storage.local.get('tiles');if(valid(r.tiles))this.groups=r.tiles}catch(e){}
       this.setGroups(this.groups);
       try{this.log=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
       if(!this.log.length)this.log=[{text:'Selamat datang di Aistim Chat!',me:false,t:Date.now()}];
       try{this.showChat=localStorage.getItem('aistim-chat-show')==='1'}catch(e){}
-      this.chatLabel=this.showChat?'Sembunyikan chat':'Tampilkan chat';
+      this.chatLabel=this.showChat?'Sembunyikan chat':'Tampilkan chat';this.chatBtn=this.showChat?BTN_ON:BTN_OFF;
       this.sync();this.tick();setInterval(()=>this.tick(),10000);
       this.scroll();
       this.refresh();
@@ -86,7 +88,7 @@ document.addEventListener('alpine:init',()=>{
       return'Pesan diterima. (Chat ini masih lokal, belum terhubung ke server.)'},
     toggleChat(){
       this.showChat=!this.showChat;
-      this.chatLabel=this.showChat?'Sembunyikan chat':'Tampilkan chat';
+      this.chatLabel=this.showChat?'Sembunyikan chat':'Tampilkan chat';this.chatBtn=this.showChat?BTN_ON:BTN_OFF;
       try{localStorage.setItem('aistim-chat-show',this.showChat?'1':'0')}catch(e){}
       if(this.showChat)this.scroll();
     },
