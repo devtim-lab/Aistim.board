@@ -16,6 +16,14 @@ const GRADIENTS = [
 
 const DEFAULT_SETTINGS = { nama: "", jam24: true, latar: "harian", warna: 0, gambar: "", tampilan: "board" };
 
+// Tampilan Start dimuat di iframe agar alamat tab tetap newtab.html (kolom alamat Chrome tetap kosong)
+function showStart() {
+  const f = document.createElement("iframe");
+  f.src = "icu.html";
+  f.style.cssText = "position:fixed;inset:0;width:100%;height:100%;border:0";
+  document.body.replaceChildren(f);
+}
+
 const $ = (id) => document.getElementById(id);
 
 // ---------- Penyimpanan (chrome.storage.local, cadangan localStorage saat dibuka sebagai file biasa) ----------
@@ -51,6 +59,7 @@ function greetingFor(hour) {
 }
 
 function tick() {
+  if (!$("clock")) return;
   const now = new Date();
   $("clock").textContent = now.toLocaleTimeString("id-ID", {
     hour: "2-digit",
@@ -311,7 +320,7 @@ $("form-settings").addEventListener("submit", async () => {
     if (settings.latar === "gambar") settings.latar = "harian";
     await store.set("settings", settings);
   }
-  if (settings.tampilan === "start") return location.replace("icu.html");
+  if (settings.tampilan === "start") return showStart();
   applyBackground();
   tick();
 });
@@ -319,7 +328,7 @@ $("form-settings").addEventListener("submit", async () => {
 (async function init() {
   const s = await store.get("settings", {});
   settings = { ...DEFAULT_SETTINGS, ...s };
-  if (settings.tampilan === "start") return location.replace("icu.html");
+  if (settings.tampilan === "start") return showStart();
   tick();
   setInterval(tick, 1000);
   initQuote();
