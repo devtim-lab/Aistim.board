@@ -25,6 +25,10 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 
 Halaman `extension/icu.html` memakai Alpine.js (build CSP, `extension/vendor/alpine.js`) dan Tailwind CSS (`extension/tailwind.css`, hasil build). Setelah mengubah class di `icu.html` atau `app.js`, jalankan `sh tools/build.sh`.
 
+## ID extension
+
+ID tetap `ngihdjhihcflmlajbfkleakcglaefgjk` (dari `key` di `manifest.json`), jadi data tersimpan tidak hilang saat extension dipasang ulang dari folder lain.
+
 ## Rilis
 
 Naikkan `version` di `extension/manifest.json` lalu push ke `main`; workflow Release membuat `Aistim-Board-<versi>.zip`.
