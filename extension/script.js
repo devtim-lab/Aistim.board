@@ -359,8 +359,19 @@ $("new-view").addEventListener("keydown", (e) => {
   }
 });
 
+function showTab(n) {
+  document.querySelectorAll(".tab").forEach((t) => {
+    const on = t.dataset.tab === String(n);
+    t.classList.toggle("active", on);
+    t.setAttribute("aria-selected", on);
+  });
+  document.querySelectorAll(".tab-panel").forEach((p) => (p.hidden = p.id !== "tab-" + n));
+}
+document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () => showTab(t.dataset.tab)));
+
 $("btn-settings").addEventListener("click", () => {
   gambarBaru = null;
+  showTab(1);
   renderViews(settings.tampilan || "board");
   $("set-name").value = settings.nama || "";
   $("set-24h").checked = !!settings.jam24;

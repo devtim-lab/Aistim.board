@@ -147,3 +147,8 @@ dialog menu button {
 .views-add { display: flex; gap: 6px; }
 .views-add input { flex: 1; min-width: 0; }
 .views-box button { border: 0; border-radius: 6px; padding: 6px 10px; font-size: 13px; color: #fff; background: #334155; cursor: pointer; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+.tab { border: 0; background: none; color: #fff; opacity: 0.6; padding: 8px 14px; font-size: 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab.active { opacity: 1; border-bottom-color: #60a5fa; }
+.tab-panel[hidden] { display: none; }

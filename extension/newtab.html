@@ -41,47 +41,56 @@
     <form method="dialog" id="form-settings">
       <h2>Pengaturan</h2>
 
-      <label>Tampilan
-        <select id="set-view">
-          <option value="board">Board</option>
-          <option value="start">Aistim</option>
-          <option value="sync">Aistim.sync</option>
-        </select>
-      </label>
-
-      <div class="views-box">
-        <div class="views-title">Tampilan buatan sendiri</div>
-        <ul id="view-list"></ul>
-        <div class="views-add">
-          <input id="new-view" type="text" maxlength="30" placeholder="Nama tampilan baru" autocomplete="off">
-          <button type="button" id="btn-add-view">Tambah</button>
-        </div>
-        <small>Isi HTML diedit lewat tautan Edit di footer tampilan itu.</small>
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab active" data-tab="1" role="tab">Umum</button>
+        <button type="button" class="tab" data-tab="2" role="tab">Menu</button>
       </div>
 
-      <label>Nama
-        <input id="set-name" type="text" maxlength="30" placeholder="Opsional, dipakai di sapaan" autocomplete="off">
-      </label>
+      <div id="tab-1" class="tab-panel">
+        <label>Tampilan
+          <select id="set-view">
+            <option value="board">Board</option>
+            <option value="start">Aistim</option>
+            <option value="sync">Aistim.sync</option>
+          </select>
+        </label>
 
-      <label class="row">
-        <input id="set-24h" type="checkbox"> Format jam 24 jam
-      </label>
+        <label>Nama
+          <input id="set-name" type="text" maxlength="30" placeholder="Opsional, dipakai di sapaan" autocomplete="off">
+        </label>
 
-      <label>Latar
-        <select id="set-bg">
-          <option value="harian">Berganti tiap hari</option>
-          <option value="warna">Pilih warna</option>
-          <option value="gambar">Gambar sendiri</option>
-        </select>
-      </label>
+        <label class="row">
+          <input id="set-24h" type="checkbox"> Format jam 24 jam
+        </label>
 
-      <label id="row-warna" hidden>Warna
-        <select id="set-grad"></select>
-      </label>
+        <label>Latar
+          <select id="set-bg">
+            <option value="harian">Berganti tiap hari</option>
+            <option value="warna">Pilih warna</option>
+            <option value="gambar">Gambar sendiri</option>
+          </select>
+        </label>
 
-      <div id="row-gambar" hidden>
-        <input id="set-img" type="file" accept="image/*">
-        <small id="img-info"></small>
+        <label id="row-warna" hidden>Warna
+          <select id="set-grad"></select>
+        </label>
+
+        <div id="row-gambar" hidden>
+          <input id="set-img" type="file" accept="image/*">
+          <small id="img-info"></small>
+        </div>
+      </div>
+
+      <div id="tab-2" class="tab-panel" hidden>
+        <div class="views-box">
+          <div class="views-title">Tampilan buatan sendiri</div>
+          <ul id="view-list"></ul>
+          <div class="views-add">
+            <input id="new-view" type="text" maxlength="30" placeholder="Nama menu baru" autocomplete="off">
+            <button type="button" id="btn-add-view">Tambah</button>
+          </div>
+          <small>Setelah ditambah, pilih menunya di tab Umum → Tampilan. Isi HTML diedit lewat tautan Edit di footer menu itu.</small>
+        </div>
       </div>
 
       <menu>
