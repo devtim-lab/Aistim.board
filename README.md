@@ -14,6 +14,13 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 - Tile tampilan Start bisa diubah tanpa rilis: edit `data/tiles.json` lalu push ke `main`; extension mengambilnya dari GitHub saat online dan menyimpannya untuk offline
 - Pengaturan lewat tombol ⚙ di kanan atas; semua data tersimpan di `chrome.storage.local`
 
+## Struktur
+
+- `extension/` — halaman utama (Board): `newtab.html`, `script.js`, `style.css`
+- `extension/menu/` — halaman tampilan lain: `icu.html` (Aistim), `sync.html` (Aistim.sync dan tampilan buatan sendiri), beserta `app.js`, `sync.js`, `tailwind.css`, `vendor/`
+- `data/` — isi yang bisa diedit tanpa pasang ulang
+- `tools/` — pembuat CSS
+
 ## Menjalankan secara lokal
 
 1. Buka `chrome://extensions`.
@@ -33,7 +40,7 @@ Di Pengaturan → **Tampilan buatan sendiri**: tambah tampilan baru (nama bebas,
 
 ## Mengubah tampilan Start
 
-Halaman `extension/icu.html` memakai Alpine.js (build CSP, `extension/vendor/alpine.js`) dan Tailwind CSS (`extension/tailwind.css`, hasil build). Setelah mengubah class di `icu.html` atau `app.js`, jalankan `sh tools/build.sh`.
+Halaman `extension/menu/icu.html` memakai Alpine.js (build CSP, `extension/menu/vendor/alpine.js`) dan Tailwind CSS (`extension/menu/tailwind.css`, hasil build). Setelah mengubah class di `icu.html` atau `app.js`, jalankan `sh tools/build.sh`.
 
 ## ID extension
 

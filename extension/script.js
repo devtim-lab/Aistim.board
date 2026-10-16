@@ -24,7 +24,7 @@ window.addEventListener("message", (e) => {
   if (e.origin === location.origin && e.data && e.data.aistim === "board") location.reload();
 });
 
-function showStart(page = "icu.html") {
+function showStart(page = "menu/icu.html") {
   const f = document.createElement("iframe");
   f.src = page;
   f.style.cssText = "position:fixed;inset:0;width:100%;height:100%;border:0";
@@ -33,7 +33,7 @@ function showStart(page = "icu.html") {
 
 function openCustom() {
   const id = String(settings.tampilan).slice(2);
-  if (views.some((v) => v.id === id)) return showStart("sync.html?id=" + encodeURIComponent(id));
+  if (views.some((v) => v.id === id)) return showStart("menu/sync.html?id=" + encodeURIComponent(id));
   settings.tampilan = "board"; // tampilan sudah dihapus: kembali ke Board
   store.set("settings", settings);
   applyBackground();
@@ -406,7 +406,7 @@ $("form-settings").addEventListener("submit", async () => {
     await store.set("settings", settings);
   }
   if (settings.tampilan === "start") return showStart();
-  if (settings.tampilan === "sync") return showStart("sync.html");
+  if (settings.tampilan === "sync") return showStart("menu/sync.html");
   if (String(settings.tampilan).startsWith("v:")) return openCustom();
   applyBackground();
   tick();
@@ -417,7 +417,7 @@ $("form-settings").addEventListener("submit", async () => {
   settings = { ...DEFAULT_SETTINGS, ...s };
   views = await store.get("views", []);
   if (settings.tampilan === "start") return showStart();
-  if (settings.tampilan === "sync") return showStart("sync.html");
+  if (settings.tampilan === "sync") return showStart("menu/sync.html");
   if (String(settings.tampilan).startsWith("v:")) return openCustom();
   tick();
   setInterval(tick, 1000);
