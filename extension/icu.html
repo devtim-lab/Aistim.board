@@ -29,7 +29,7 @@
       </template>
     </div>
   </template>
-  <section class="flex w-full h-[min(60vh,480px)] min-h-[300px] flex-none flex-col border border-white/20 bg-[#1d0750]/80 select-text md:w-[clamp(240px,calc(var(--u)*3+8px),360px)] md:h-[min(calc(var(--u)*4+12px),calc(100vh-max(20vh,90px)-24px))] md:min-h-[260px]">
+  <section x-show="showChat" class="flex w-full h-[min(60vh,480px)] min-h-[300px] flex-none flex-col border border-white/20 bg-[#1d0750]/80 select-text md:w-[clamp(240px,calc(var(--u)*3+8px),360px)] md:h-[min(calc(var(--u)*4+12px),calc(100vh-max(20vh,90px)-24px))] md:min-h-[260px]">
     <h2 class="flex items-center justify-between bg-[#6a3fc4] px-3 py-2 text-[clamp(16px,calc(var(--u)*.16),20px)] font-light">Chat <button type="button" class="border-0 bg-transparent text-xs text-white/60 hover:text-white cursor-pointer" @click="clear">Hapus</button></h2>
     <div id="msgs" x-ref="msgs" class="flex flex-1 flex-col gap-2 overflow-y-auto p-3 [scrollbar-width:thin]">
       <template x-for="m in msgs">
@@ -42,6 +42,6 @@
     </form>
   </section>
 </main>
-<footer class="px-[5vw] pb-4 text-[11px] opacity-50 md:fixed md:bottom-2 md:left-[6vw] md:p-0">Aistim.icu · <a href="newtab.html" class="cursor-pointer hover:underline" @click.prevent="back">Kembali ke Board</a></footer>
+<footer class="px-[5vw] pb-4 text-[11px] opacity-50 md:fixed md:bottom-2 md:left-[6vw] md:p-0"><a href="#" class="hover:underline" x-text="chatLabel" @click.prevent="toggleChat"></a> · <a href="newtab.html" class="cursor-pointer hover:underline" @click.prevent="back">Kembali ke Board</a></footer>
 </body>
 </html>

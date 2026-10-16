@@ -40,12 +40,14 @@ const GROUP=['grid gap-1 auto-rows-[var(--u)] grid-cols-[repeat(6,var(--u))] shr
 
 document.addEventListener('alpine:init',()=>{
   Alpine.data('start',()=>({
-    groups:G0, view:[], msgs:[], log:[], input:'', clock:'',
+    groups:G0, showChat:false, chatLabel:'Tampilkan chat', view:[], msgs:[], log:[], input:'', clock:'',
     async init(){
       try{const r=await chrome.storage.local.get('tiles');if(valid(r.tiles))this.groups=r.tiles}catch(e){}
       this.setGroups(this.groups);
       try{this.log=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
       if(!this.log.length)this.log=[{text:'Selamat datang di Aistim Chat!',me:false,t:Date.now()}];
+      try{this.showChat=localStorage.getItem('aistim-chat-show')==='1'}catch(e){}
+      this.chatLabel=this.showChat?'Sembunyikan chat':'Tampilkan chat';
       this.sync();this.tick();setInterval(()=>this.tick(),10000);
       this.scroll();
       this.refresh();
@@ -82,6 +84,12 @@ document.addEventListener('alpine:init',()=>{
       if(/jam|waktu/.test(q))return'Sekarang pukul '+hm(Date.now())+'.';
       if(/tanggal|hari/.test(q))return new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
       return'Pesan diterima. (Chat ini masih lokal, belum terhubung ke server.)'},
+    toggleChat(){
+      this.showChat=!this.showChat;
+      this.chatLabel=this.showChat?'Sembunyikan chat':'Tampilkan chat';
+      try{localStorage.setItem('aistim-chat-show',this.showChat?'1':'0')}catch(e){}
+      if(this.showChat)this.scroll();
+    },
     clear(){this.log=[];this.save();this.sync()},
     wheel(e){
       if(e.target.closest('#msgs')||matchMedia('(max-width:767px)').matches)return;
