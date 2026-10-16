@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aistim Board</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="board">
+    <section class="hero">
+      <div id="clock" class="clock">00:00</div>
+      <div id="date" class="date"></div>
+      <div id="greeting" class="greeting"></div>
+    </section>
+
+    <section class="quote">
+      <p id="quote-text"></p>
+      <small id="quote-author"></small>
+    </section>
+
+    <section class="todo">
+      <h2>Tugas</h2>
+      <form id="todo-form">
+        <input id="todo-input" type="text" placeholder="Tambah tugas, tekan Enter" autocomplete="off" required>
+      </form>
+      <ul id="todo-list"></ul>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>

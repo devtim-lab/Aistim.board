@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Aistim Board",
+  "version": "0.1.0",
+  "description": "Dashboard sederhana di tab baru: jam, sapaan, kutipan, dan daftar tugas.",
+  "permissions": ["storage"],
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  }
+}
