@@ -14,7 +14,7 @@ const GRADIENTS = [
   { nama: "Biru malam", warna: ["#0f2027", "#2c5364"] },
 ];
 
-const DEFAULT_SETTINGS = { nama: "", jam24: true, latar: "harian", warna: 0, gambar: "" };
+const DEFAULT_SETTINGS = { nama: "", jam24: true, latar: "harian", warna: 0, gambar: "", tampilan: "board" };
 
 const $ = (id) => document.getElementById(id);
 
@@ -267,6 +267,7 @@ function resizeImage(file, maxSide = 1920) {
 
 $("btn-settings").addEventListener("click", () => {
   gambarBaru = null;
+  $("set-view").value = settings.tampilan || "board";
   $("set-name").value = settings.nama || "";
   $("set-24h").checked = !!settings.jam24;
   $("set-bg").value = settings.latar;
@@ -300,6 +301,7 @@ $("form-settings").addEventListener("submit", async () => {
     latar: latar === "gambar" && !gambar ? "harian" : latar, // tanpa gambar tersimpan, kembali ke latar harian
     warna: Number($("set-grad").value) || 0,
     gambar,
+    tampilan: $("set-view").value,
   };
   try {
     await store.set("settings", settings);
@@ -309,6 +311,7 @@ $("form-settings").addEventListener("submit", async () => {
     if (settings.latar === "gambar") settings.latar = "harian";
     await store.set("settings", settings);
   }
+  if (settings.tampilan === "start") return location.replace("icu.html");
   applyBackground();
   tick();
 });
@@ -316,6 +319,7 @@ $("form-settings").addEventListener("submit", async () => {
 (async function init() {
   const s = await store.get("settings", {});
   settings = { ...DEFAULT_SETTINGS, ...s };
+  if (settings.tampilan === "start") return location.replace("icu.html");
   tick();
   setInterval(tick, 1000);
   initQuote();
