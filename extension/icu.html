@@ -5,21 +5,43 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#2d0a6b">
 <title>Aistim — Home</title>
-<link rel="stylesheet" href="icu.css">
+<link rel="stylesheet" href="tailwind.css">
+<script src="app.js" defer></script>
+<script src="vendor/alpine.js" defer></script>
 </head>
-<body>
-<header>
-  <h1>Home</h1>
-  <div class="user"><div class="clock" id="clock"></div>Aistim<i><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M2 24c0-7 5-9 10-9s10 2 10 9z"/></svg></i></div>
+<body class="h-full overflow-auto md:overflow-hidden select-none text-white font-light bg-[#2b0a66] bg-[radial-gradient(ellipse_at_70%_110%,#4b2a9a_0%,transparent_55%)]" x-data="start">
+<header class="flex items-start justify-between px-[5vw] pt-5 pb-4 md:fixed md:inset-x-0 md:top-0 md:h-[20vh] md:min-h-[90px] md:px-[6vw] md:pt-[5vh] md:pb-0">
+  <h1 class="font-extralight tracking-tight text-[clamp(34px,5vw,56px)]">Home</h1>
+  <div class="flex items-center gap-3 text-xl font-light">
+    <div class="hidden md:block mr-4 text-[13px] opacity-80 text-right" x-text="clock"></div>
+    Aistim
+    <i class="grid size-10 flex-none place-items-end justify-items-center overflow-hidden rounded-full bg-white"><svg viewBox="0 0 24 24" class="w-[30px] -mb-[3px] fill-[#6a6a6a]"><circle cx="12" cy="8" r="5"/><path d="M2 24c0-7 5-9 10-9s10 2 10 9z"/></svg></i>
+  </div>
 </header>
-<main id="start">
-  <section class="chat" id="chat">
-    <h2>Chat <button id="clr" type="button">Hapus</button></h2>
-    <div id="msgs"></div>
-    <form id="cf"><input id="ci" placeholder="Tulis pesan…" autocomplete="off" maxlength="500"><button>Kirim</button></form>
+<main x-ref="main" @wheel="wheel" class="flex flex-col gap-5 px-[5vw] pb-10 md:absolute md:inset-x-0 md:top-[max(20vh,90px)] md:bottom-0 md:flex-row md:items-start md:gap-[calc(var(--u)*.45)] md:overflow-x-auto md:overflow-y-hidden md:px-[6vw] md:pb-0 [scrollbar-width:thin] [scrollbar-color:#fff5_transparent]">
+  <template x-for="g in view">
+    <div :class="g.cls">
+      <template x-for="t in g.tiles">
+        <a class="relative block overflow-hidden text-white no-underline outline outline-2 -outline-offset-2 outline-transparent transition hover:outline-white/60 active:scale-95" :style="t.style" :href="t.href" :target="t.target" rel="noopener">
+          <svg x-show="t.showIcon" viewBox="0 0 24 24" class="absolute left-1/2 top-[44%] w-[calc(var(--u)*.42)] -translate-x-1/2 -translate-y-1/2 fill-none stroke-white stroke-[2.2]" stroke-linecap="round" stroke-linejoin="round" x-html="t.icon"></svg>
+          <span class="absolute bottom-[5px] left-2 text-[max(10px,calc(var(--u)*.1))] [text-shadow:0_0_3px_#0004]" x-text="t.n"></span>
+        </a>
+      </template>
+    </div>
+  </template>
+  <section class="flex w-full h-[min(60vh,480px)] min-h-[300px] flex-none flex-col border border-white/20 bg-[#1d0750]/80 select-text md:w-[clamp(240px,calc(var(--u)*3+8px),360px)] md:h-[min(calc(var(--u)*4+12px),calc(100vh-max(20vh,90px)-24px))] md:min-h-[260px]">
+    <h2 class="flex items-center justify-between bg-[#6a3fc4] px-3 py-2 text-[clamp(16px,calc(var(--u)*.16),20px)] font-light">Chat <button type="button" class="border-0 bg-transparent text-xs text-white/60 hover:text-white cursor-pointer" @click="clear">Hapus</button></h2>
+    <div id="msgs" x-ref="msgs" class="flex flex-1 flex-col gap-2 overflow-y-auto p-3 [scrollbar-width:thin]">
+      <template x-for="m in msgs">
+        <div class="max-w-[85%] break-words px-2.5 py-1.5 text-[clamp(12px,calc(var(--u)*.11),14px)] leading-snug" :class="m.cls"><span x-text="m.text"></span><small class="mt-0.5 block text-[10px] opacity-60" x-text="m.meta"></small></div>
+      </template>
+    </div>
+    <form class="flex border-t border-white/20" @submit.prevent="send">
+      <input x-ref="inp" @input="onInput" placeholder="Tulis pesan…" autocomplete="off" maxlength="500" class="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/50">
+      <button class="cursor-pointer border-0 bg-[#0f9d0f] px-[18px] text-[15px] text-white">Kirim</button>
+    </form>
   </section>
 </main>
-<footer>Aistim.icu · <a id="back" href="newtab.html">Kembali ke Board</a></footer>
-<script src="app.js"></script>
+<footer class="px-[5vw] pb-4 text-[11px] opacity-50 md:fixed md:bottom-2 md:left-[6vw] md:p-0">Aistim.icu · <a href="newtab.html" class="cursor-pointer hover:underline" @click.prevent="back">Kembali ke Board</a></footer>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Ubah daftar tile di sini. w/h = lebar/tinggi (satuan kotak), href = tujuan klik. */
+/* Aistim Start: Alpine.js (build CSP) + Tailwind. Ubah tile di data/tiles.json (tanpa rilis). */
 const I={
 mail:'<rect x="3" y="6" width="18" height="12"/><path d="M3 7l9 7 9-7"/>',
 cal:'<rect x="4" y="5" width="16" height="15"/><path d="M4 9h16M8 3v4M16 3v4M8 13h2M12 13h2M16 13h1M8 16h2M12 16h2"/>',
@@ -28,64 +28,69 @@ const G0=[
  [ {n:'Bing',c:'#9a7d2c',w:2,img:'linear-gradient(#b8c46a,#6f8b2f 55%,#d7a43a)',cls:'photo'}, {n:'Perjalanan',i:'bag',c:'#0f9aa3',w:2},
    {n:'Game',i:'pad',c:'#0f9d0f'}, {n:'Kamera',i:'cam',c:'#a512a5'}, {n:'Musik',i:'head',c:'#d9531e'}, {n:'Video',i:'video',c:'#c2183e'} ]
 ];
-const root=document.getElementById('start');
 const TILES_URL='https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/tiles.json';
+const KEY='aistim-chat';
 const okC=v=>typeof v==='string'&&/^#[0-9a-f]{3,8}$/i.test(v);
 const okImg=v=>typeof v==='string'&&/^linear-gradient\([#0-9a-z%.,() -]+\)$/i.test(v);
 const okN=v=>Number.isInteger(v)&&v>=1&&v<=6;
 function valid(g){return Array.isArray(g)&&g.length&&g.length<=6&&g.every(x=>Array.isArray(x)&&x.length<=60&&x.every(t=>t&&typeof t.n==='string'&&t.n.length<=30&&okC(t.c)&&(t.i===undefined||I[t.i])&&(t.w===undefined||okN(t.w))&&(t.h===undefined||okN(t.h))&&(t.img===undefined||okImg(t.img))&&(t.href===undefined||/^https:\/\//.test(t.href))))}
-function draw(G){
-  root.querySelectorAll('.group').forEach(x=>x.remove());
-  G.forEach((g,gi)=>{
-    const d=document.createElement('div');d.className='group '+(gi?'g2':'g1');
-    g.forEach(t=>{
-      const a=document.createElement('a');a.className='tile'+(t.img?' photo':'');
-      a.style.setProperty('--c',t.c);if(t.w)a.style.setProperty('--w',t.w);if(t.h)a.style.setProperty('--h',t.h);
-      if(t.img)a.style.setProperty('--img',t.img);
-      if(t.href){a.href=t.href;a.target='_blank';a.rel='noopener'}
-      if(t.i){a.innerHTML='<svg viewBox="0 0 24 24">'+I[t.i]+'</svg>'}
-      const sp=document.createElement('span');sp.textContent=t.n;a.appendChild(sp);
-      d.appendChild(a);
-    });
-    root.insertBefore(d,document.getElementById('chat'));
-  });
-}
-/* Tile: tampil dari salinan tersimpan (atau bawaan), lalu diperbarui dari GitHub bila ada internet. */
-(async function(){
-  let cur=G0;
-  try{const r=await chrome.storage.local.get('tiles');if(valid(r.tiles))cur=r.tiles}catch(e){}
-  draw(cur);
-  try{
-    const res=await fetch(TILES_URL,{cache:'no-cache'});if(!res.ok)return;
-    const g=await res.json();if(!valid(g)||JSON.stringify(g)===JSON.stringify(cur))return;
-    try{await chrome.storage.local.set({tiles:g})}catch(e){}
-    draw(g);
-  }catch(e){}
-})();
-/* Chat: tersimpan di browser (localStorage), balasan otomatis sederhana. Belum terhubung ke server. */
-const msgs=document.getElementById('msgs'),ci=document.getElementById('ci'),KEY='aistim-chat';
-let log=[];try{log=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(log.slice(-100)))}catch(e){}};
 const hm=t=>new Date(t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
-function show(m){const d=document.createElement('div');d.className='m'+(m.me?' me':'');
-  d.textContent=m.text;const s=document.createElement('small');s.textContent=(m.me?'Anda':'Aistim')+' · '+hm(m.t);d.appendChild(s);
-  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
-function add(text,me){const m={text,me,t:Date.now()};log.push(m);save();show(m)}
-function reply(q){q=q.toLowerCase();
-  if(/halo|hai|^hi/.test(q))return'Halo! Ada yang bisa dibantu?';
-  if(/jam|waktu/.test(q))return'Sekarang pukul '+hm(Date.now())+'.';
-  if(/tanggal|hari/.test(q))return new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  return'Pesan diterima. (Chat ini masih lokal, belum terhubung ke server.)'}
-if(!log.length)log.push({text:'Selamat datang di Aistim Chat!',me:false,t:Date.now()});
-log.forEach(show);
-document.getElementById('cf').addEventListener('submit',e=>{e.preventDefault();const v=ci.value.trim();if(!v)return;
-  ci.value='';add(v,true);setTimeout(()=>add(reply(v),false),500)});
-document.getElementById('clr').addEventListener('click',()=>{log=[];save();msgs.innerHTML=''});
-/* scroll roda mouse -> horizontal, seperti layar Start Windows 8 */
-root.addEventListener('wheel',e=>{if(e.target.closest('#msgs')||matchMedia('(max-width:800px)').matches)return;if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){root.scrollLeft+=e.deltaY;e.preventDefault()}},{passive:false});
-const clock=document.getElementById('clock');
-(function t(){const n=new Date();clock.innerHTML=n.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+'<br>'+n.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});setTimeout(t,10000)})();
-/* Aistim Board: tombol kembali ke tampilan Board */
-document.getElementById('back').addEventListener('click',async e=>{e.preventDefault();
-  try{const r=await chrome.storage.local.get('settings');await chrome.storage.local.set({settings:{...(r.settings||{}),tampilan:'board'}})}catch(x){}
-  location.href='newtab.html'});
+const GROUP=['grid gap-1 auto-rows-[var(--u)] grid-cols-[repeat(6,var(--u))] shrink-0 md:grid-cols-[repeat(6,var(--u))]',
+             'grid gap-1 auto-rows-[var(--u)] grid-cols-[repeat(6,var(--u))] shrink-0 md:grid-cols-[repeat(2,var(--u))]'];
+
+document.addEventListener('alpine:init',()=>{
+  Alpine.data('start',()=>({
+    groups:G0, view:[], msgs:[], log:[], input:'', clock:'',
+    async init(){
+      try{const r=await chrome.storage.local.get('tiles');if(valid(r.tiles))this.groups=r.tiles}catch(e){}
+      this.setGroups(this.groups);
+      try{this.log=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
+      if(!this.log.length)this.log=[{text:'Selamat datang di Aistim Chat!',me:false,t:Date.now()}];
+      this.sync();this.tick();setInterval(()=>this.tick(),10000);
+      this.scroll();
+      this.refresh();
+    },
+    async refresh(){
+      try{
+        const res=await fetch(TILES_URL,{cache:'no-cache'});if(!res.ok)return;
+        const g=await res.json();if(!valid(g)||JSON.stringify(g)===JSON.stringify(this.groups))return;
+        try{await chrome.storage.local.set({tiles:g})}catch(e){}
+        this.setGroups(g);
+      }catch(e){}
+    },
+    setGroups(g){
+      this.groups=g;
+      this.view=g.map((grp,gi)=>({cls:GROUP[gi?1:0],tiles:grp.map(t=>{
+        let st='background:'+(t.img?t.img+','+t.c+';background-size:cover;background-position:center':t.c)+';';
+        if(t.w)st+='grid-column:span '+t.w+';';
+        if(t.h)st+='grid-row:span '+t.h+';';
+        return {n:t.n,href:t.href||'#',target:t.href?'_blank':'_self',style:st,showIcon:!!t.i&&!t.img,icon:t.i?I[t.i]:''};
+      })}));
+    },
+    sync(){this.msgs=this.log.map(m=>({text:m.text,cls:m.me?'self-end bg-[#0097a7]':'bg-white/20',meta:(m.me?'Anda':'Aistim')+' · '+hm(m.t)}))},
+    save(){try{localStorage.setItem(KEY,JSON.stringify(this.log.slice(-100)))}catch(e){}},
+    scroll(){this.$nextTick(()=>{const m=this.$refs.msgs;if(m)m.scrollTop=m.scrollHeight})},
+    add(text,me){this.log.push({text,me,t:Date.now()});this.save();this.sync();this.scroll()},
+    onInput(e){this.input=e.target.value},
+    send(){
+      const v=this.input.trim();if(!v)return;
+      this.input='';this.$refs.inp.value='';this.add(v,true);
+      setTimeout(()=>this.add(this.reply(v),false),500);
+    },
+    reply(q){q=q.toLowerCase();
+      if(/halo|hai|^hi/.test(q))return'Halo! Ada yang bisa dibantu?';
+      if(/jam|waktu/.test(q))return'Sekarang pukul '+hm(Date.now())+'.';
+      if(/tanggal|hari/.test(q))return new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      return'Pesan diterima. (Chat ini masih lokal, belum terhubung ke server.)'},
+    clear(){this.log=[];this.save();this.sync()},
+    wheel(e){
+      if(e.target.closest('#msgs')||matchMedia('(max-width:767px)').matches)return;
+      if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){this.$refs.main.scrollLeft+=e.deltaY;e.preventDefault()}
+    },
+    tick(){const n=new Date();this.clock=n.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+' · '+n.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'})},
+    async back(){
+      try{const r=await chrome.storage.local.get('settings');await chrome.storage.local.set({settings:{...(r.settings||{}),tampilan:'board'}})}catch(x){}
+      location.href='newtab.html';
+    },
+  }));
+});

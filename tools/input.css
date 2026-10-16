@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{--u:clamp(64px,9vw,128px)}
+@media(max-width:767px){:root{--u:calc((100vw - 10vw - 20px)/6)}}
+html,body{height:100%}

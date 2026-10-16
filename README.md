@@ -2,7 +2,7 @@
 
 Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard pribadi. Terinspirasi dari [Muslim Board](https://github.com/novalagung/muslimboard).
 
-## Fitur (v0.4)
+## Fitur (v0.5)
 
 - Jam dan tanggal (bahasa Indonesia), format 24 jam atau 12 jam
 - Sapaan sesuai waktu, dengan nama Anda (opsional)
@@ -20,6 +20,10 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 2. Aktifkan **Developer mode**.
 3. Klik **Load unpacked**, pilih folder `extension/`.
 4. Buka tab baru.
+
+## Mengubah tampilan Start
+
+Halaman `extension/icu.html` memakai Alpine.js (build CSP, `extension/vendor/alpine.js`) dan Tailwind CSS (`extension/tailwind.css`, hasil build). Setelah mengubah class di `icu.html` atau `app.js`, jalankan `sh tools/build.sh`.
 
 ## Rilis
 
