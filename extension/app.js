@@ -90,7 +90,7 @@ document.addEventListener('alpine:init',()=>{
     tick(){const n=new Date();this.clock=n.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})+' · '+n.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'})},
     async back(){
       try{const r=await chrome.storage.local.get('settings');await chrome.storage.local.set({settings:{...(r.settings||{}),tampilan:'board'}})}catch(x){}
-      top.location.href='newtab.html';
+      parent.postMessage({aistim:'board'},location.origin);
     },
   }));
 });

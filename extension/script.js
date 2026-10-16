@@ -17,6 +17,10 @@ const GRADIENTS = [
 const DEFAULT_SETTINGS = { nama: "", jam24: true, latar: "harian", warna: 0, gambar: "", tampilan: "board" };
 
 // Tampilan Start dimuat di iframe agar alamat tab tetap newtab.html (kolom alamat Chrome tetap kosong)
+window.addEventListener("message", (e) => {
+  if (e.origin === location.origin && e.data && e.data.aistim === "board") location.reload();
+});
+
 function showStart() {
   const f = document.createElement("iframe");
   f.src = "icu.html";
