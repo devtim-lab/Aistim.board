@@ -2,6 +2,7 @@
    Bisa juga diedit langsung di sini (tersimpan lokal), diunduh, atau diimpor dari berkas. Salinan lokal diutamakan.
    Ditampilkan di iframe sandbox: HTML dan CSS berjalan, skrip tidak. */
 const URL_SYNC = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/sync.html";
+const URL_SIG = URL_SYNC + ".sig";
 const DEFAULT_HTML = '<!doctype html><meta charset="utf-8"><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0f172a;color:#fff;font-family:system-ui"><h1 style="font-weight:300;font-size:64px">Hallo</h1>';
 const $ = (id) => document.getElementById(id);
 const GH = { owner: "devtim-lab", repo: "Aistim.board", path: "data/sync.html", branch: "main" };
@@ -32,18 +33,20 @@ async function loadViews() { const v = await get("views"); return Array.isArray(
     render();
     return;
   }
-  const r = await get("syncHtml");
+  const r = await get("syncHtmlV");
   if (ok(r)) remote = r;
   const l = await get("syncLocal");
   if (ok(l)) local = l;
   render();
   try {
-    const res = await fetch(URL_SYNC, { cache: "no-cache" });
-    if (!res.ok) return;
-    const h = await res.text();
+    const [res, sg] = await Promise.all([fetch(URL_SYNC, { cache: "no-cache" }), fetch(URL_SIG, { cache: "no-cache" })]);
+    if (!res.ok || !sg.ok) return;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    if (!AistimVerify.cek("sync.html", buf, await sg.text())) return; // tanda tangan admin tidak cocok: abaikan data GitHub
+    const h = new TextDecoder().decode(buf);
     if (!ok(h) || h === remote) return;
     remote = h;
-    await put({ syncHtml: h });
+    await put({ syncHtmlV: h });
     if (!ok(local)) render();
   } catch (e) {}
 })();
@@ -162,6 +165,34 @@ $("tk-del").addEventListener("click", async () => {
   note("Token dihapus");
 });
 
+// tanda tangan data: berkas data/sync.html.sig, dibuat dari key admin (hex) yang disimpan di Board
+async function unggahSig(isi, token) {
+  const priv = String((await get("adminKey")) || "").trim().replace(/^0x/i, "").toLowerCase();
+  if (!/^[0-9a-f]{64}$/.test(priv)) return "tanpa tanda tangan (simpan key admin hex di ikon kunci Board)";
+  try {
+    if (Secp256k1.getPublicKey(priv, true) !== AistimVerify.PUB) return "tanpa tanda tangan (key bukan key admin terdaftar)";
+    const sig = AistimVerify.tanda("sync.html", new TextEncoder().encode(isi), priv);
+    const p = GH.path + ".sig";
+    for (let coba = 0; coba < 2; coba++) {
+      const cur = await api(p, token, { q: "?ref=" + GH.branch });
+      let sha;
+      if (cur.status === 200) {
+        const j = await cur.json();
+        if ((j.content || "").replace(/\s/g, "") === b64(sig)) return "";
+        sha = j.sha;
+      } else if (cur.status !== 404) return "tanda tangan gagal (" + cur.status + ")";
+      const res = await api(p, token, {
+        method: "PUT",
+        q: "",
+        body: JSON.stringify({ message: "Aistim.sync: tanda tangan", content: b64(sig), branch: GH.branch, ...(sha ? { sha } : {}) }),
+      });
+      if (res.ok) return "";
+      if (res.status !== 409 && res.status !== 422) return "tanda tangan gagal (" + res.status + ")";
+    }
+  } catch (e) {}
+  return "tanda tangan gagal";
+}
+
 let sedangUpload = false;
 $("gh").addEventListener("click", async (e) => {
   e.preventDefault();
@@ -178,7 +209,7 @@ $("gh").addEventListener("click", async (e) => {
       if (cur.status === 200) {
         const j = await cur.json();
         sha = j.sha;
-        if ((j.content || "").replace(/\s/g, "") === b64(isi)) { note("Sudah sama dengan GitHub"); return; }
+        if ((j.content || "").replace(/\s/g, "") === b64(isi)) { const m = await unggahSig(isi, token); note(m ? "Sudah sama dengan GitHub; " + m : "Sudah sama dengan GitHub, tanda tangan sesuai"); return; }
       } else if (cur.status !== 404) {
         return gagalGH(cur.status);
       }
@@ -190,10 +221,11 @@ $("gh").addEventListener("click", async (e) => {
       if (res.ok) {
         remote = isi;
         local = null;
-        await put({ syncHtml: isi });
+        await put({ syncHtmlV: isi });
         try { await chrome.storage.local.remove("syncLocal"); } catch (x) {}
         render();
-        note("Terunggah ke GitHub");
+        const m = await unggahSig(isi, token);
+        note(m ? "Terunggah, " + m : "Terunggah dan bertanda tangan");
         return;
       }
       if (res.status !== 409 && res.status !== 422) return gagalGH(res.status); // 409/422 = sha basi, coba sekali lagi

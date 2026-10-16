@@ -29,6 +29,7 @@ const G0=[
    {n:'Game',i:'pad',c:'#0f9d0f'}, {n:'Kamera',i:'cam',c:'#a512a5'}, {n:'Musik',i:'head',c:'#d9531e'}, {n:'Video',i:'video',c:'#c2183e'} ]
 ];
 const TILES_URL='https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/tiles.json';
+const SIG_URL=TILES_URL+'.sig';
 const KEY='aistim-chat';
 const okC=v=>typeof v==='string'&&/^#[0-9a-f]{3,8}$/i.test(v);
 const okImg=v=>typeof v==='string'&&/^linear-gradient\([#0-9a-z%.,() -]+\)$/i.test(v);
@@ -44,7 +45,7 @@ document.addEventListener('alpine:init',()=>{
   Alpine.data('start',()=>({
     groups:G0, showChat:false, chatLabel:'Tampilkan chat', chatBtn:BTN_OFF, view:[], msgs:[], log:[], input:'', clock:'',
     async init(){
-      try{const r=await chrome.storage.local.get('tiles');if(valid(r.tiles))this.groups=r.tiles}catch(e){}
+      try{const r=await chrome.storage.local.get('tilesV');if(valid(r.tilesV))this.groups=r.tilesV}catch(e){}
       this.setGroups(this.groups);
       try{this.log=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){}
       if(!this.log.length)this.log=[{text:'Selamat datang di Aistim Chat!',me:false,t:Date.now()}];
@@ -56,9 +57,12 @@ document.addEventListener('alpine:init',()=>{
     },
     async refresh(){
       try{
-        const res=await fetch(TILES_URL,{cache:'no-cache'});if(!res.ok)return;
-        const g=await res.json();if(!valid(g)||JSON.stringify(g)===JSON.stringify(this.groups))return;
-        try{await chrome.storage.local.set({tiles:g})}catch(e){}
+        const [res,sg]=await Promise.all([fetch(TILES_URL,{cache:'no-cache'}),fetch(SIG_URL,{cache:'no-cache'})]);
+        if(!res.ok||!sg.ok)return;
+        const buf=new Uint8Array(await res.arrayBuffer());
+        if(!AistimVerify.cek('tiles.json',buf,await sg.text()))return; // tanda tangan admin tidak cocok: abaikan
+        const g=JSON.parse(new TextDecoder().decode(buf));if(!valid(g)||JSON.stringify(g)===JSON.stringify(this.groups))return;
+        try{await chrome.storage.local.set({tilesV:g})}catch(e){}
         this.setGroups(g);
       }catch(e){}
     },

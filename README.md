@@ -42,6 +42,18 @@ Di halaman Aistim.sync (footer): **Edit** (editor langsung, tersimpan di perangk
 
 Ikon awan-panah di footer Aistim.sync menyimpan HTML ke `data/sync.html` di repo ini lewat API GitHub, sehingga semua perangkat mengikutinya. Ikon kunci untuk mengisi atau menghapus token. Token dibuat sendiri (fine-grained, hanya repo Aistim.board, izin **Contents: Read and write**) dan hanya tersimpan di browser itu. Repo ini public, jadi isi yang diunggah bisa dibaca siapa saja.
 
+## Verifikasi data dari GitHub
+
+Data yang diambil dari GitHub (`data/tiles.json`, `data/sync.html`) hanya dipakai bila ada berkas tanda tangan `<nama>.sig` yang cocok dengan public key admin (tertanam di `extension/menu/verify.js`, sama dengan admin di `akun.json` repo Auth). Tanda tangan ECDSA secp256k1 memakai library `extension/menu/lib/secp256k1.js` dari SDK Aistim. Ini hanya memeriksa data; tidak ada kode yang diunduh atau dijalankan. Data yang tidak ada tanda tangannya, tidak cocok, atau diubah diabaikan, dan extension memakai salinan terverifikasi terakhir atau data bawaan.
+
+Menandatangani (di komputer sendiri, private key jangan masuk repo):
+
+```
+AISTIM_ADMIN_KEY=<64 hex> node tools/sign.mjs data/tiles.json data/sync.html
+```
+
+Commit dan push berkas `*.sig` bersama datanya. Di versi lengkap, upload dari Aistim.sync otomatis ikut menandatangani `data/sync.html.sig` bila key admin (hex) tersimpan lewat ikon kunci di Board.
+
 ## Tampilan buatan sendiri
 
 Di Pengaturan → tab **Menu** ada tabel CRUD: tambah menu baru (maksimal 20), pakai, edit HTML, ubah nama, hapus. Pilih tampilannya di daftar **Tampilan**. Isi HTML diedit lewat tautan **Edit** di footer tampilan itu (juga ada Salin, Unduh, Impor file). Semua tersimpan di perangkat (`chrome.storage.local`), tanpa upload dan tanpa pasang ulang.

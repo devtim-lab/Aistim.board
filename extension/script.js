@@ -432,7 +432,7 @@ async function openEditor(target) {
   editing = target;
   let html = DEFAULT_VIEW_HTML;
   if (target.kind === "sync") {
-    html = (await store.get("syncLocal", "")) || (await store.get("syncHtml", "")) || html;
+    html = (await store.get("syncLocal", "")) || (await store.get("syncHtmlV", "")) || html;
     $("ed-title").textContent = "Edit HTML: Aistim.sync";
     $("ed-reset").hidden = !(await store.get("syncLocal", ""));
   } else {
