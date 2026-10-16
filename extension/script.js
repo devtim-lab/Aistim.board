@@ -17,6 +17,27 @@ const GRADIENTS = [
 const DEFAULT_VIEW_HTML = '<!doctype html><meta charset="utf-8"><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0f172a;color:#fff;font-family:system-ui"><h1 style="font-weight:300;font-size:64px">Hallo</h1>';
 let views = []; // tampilan buatan sendiri: [{ id, nama, html }]
 
+// Simpan daftar menu, lalu baca ulang untuk memastikan benar-benar tersimpan; salinan cadangan di localStorage.
+async function saveViews() {
+  try { localStorage.setItem("views-backup", JSON.stringify(views)); } catch (e) {}
+  try {
+    await store.set("views", views);
+    const cek = await store.get("views", null);
+    if (!Array.isArray(cek) || cek.length !== views.length) throw new Error("data tidak terbaca ulang");
+    status("Tersimpan (" + views.length + " menu buatan).");
+    return true;
+  } catch (e) {
+    status("Gagal menyimpan: " + (e && e.message ? e.message : e), true);
+    return false;
+  }
+}
+function status(t, err) {
+  const el = $("menu-status");
+  if (!el) return;
+  el.textContent = t;
+  el.style.color = err ? "#fca5a5" : "";
+}
+
 const DEFAULT_SETTINGS = { nama: "", jam24: true, latar: "harian", warna: 0, gambar: "", tampilan: "board" };
 
 // Tampilan Start dimuat di iframe agar alamat tab tetap newtab.html (kolom alamat Chrome tetap kosong)
@@ -379,7 +400,7 @@ function renderViews(pilih) {
           const baru = await popup({ judul: "Ubah nama menu", nilai: r.v.nama, ok: "Simpan" });
           if (!baru) return;
           views[r.i].nama = baru;
-          await store.set("views", views);
+          await saveViews();
           renderViews($("set-view").value);
         })
       );
@@ -391,7 +412,7 @@ function renderViews(pilih) {
             if (!(await popup({ judul: "Hapus menu", teks: 'Hapus menu "' + r.v.nama + '" beserta HTML-nya?', ok: "Hapus", bahaya: true }))) return;
             const dipilih = $("set-view").value === r.val;
             views.splice(r.i, 1);
-            await store.set("views", views);
+            await saveViews();
             renderViews(dipilih ? "board" : $("set-view").value);
           },
           true
@@ -438,7 +459,7 @@ $("ed-save").addEventListener("click", async () => {
   else {
     const e = views.find((x) => x.id === editing.id);
     if (e) e.html = v;
-    await store.set("views", views);
+    await saveViews();
   }
   closeEditor();
   msg("HTML disimpan.");
@@ -456,9 +477,13 @@ $("btn-add-view").addEventListener("click", async () => {
   if (!nama) return;
   const id = Date.now().toString(36);
   views.push({ id, nama, html: DEFAULT_VIEW_HTML });
-  await store.set("views", views);
+  await saveViews();
   renderViews("v:" + id);
 });
+
+try {
+  if (hasChrome && chrome.runtime && chrome.runtime.getManifest) $("ver").textContent = "v" + chrome.runtime.getManifest().version;
+} catch (e) {}
 
 function showTab(n) {
   document.querySelectorAll(".tab").forEach((t) => {
@@ -529,6 +554,12 @@ $("form-settings").addEventListener("submit", async () => {
   const s = await store.get("settings", {});
   settings = { ...DEFAULT_SETTINGS, ...s };
   views = await store.get("views", []);
+  if (!views.length) {
+    try {
+      const b = JSON.parse(localStorage.getItem("views-backup") || "[]");
+      if (Array.isArray(b) && b.length) { views = b; await store.set("views", views); }
+    } catch (e) {}
+  }
   if (settings.tampilan === "start") return showStart();
   if (settings.tampilan === "sync") return showStart("menu/sync.html");
   if (String(settings.tampilan).startsWith("v:")) return openCustom();
