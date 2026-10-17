@@ -42,7 +42,7 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
 #lk-msg,#pw-msg{margin-right:auto;font-size:12px;opacity:.85}
 #pw input[hidden],#pw button[hidden]{display:none}
 #prof{position:fixed;top:10px;right:10px;z-index:5;display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#ffffff26;color:#fff;cursor:pointer;backdrop-filter:blur(4px)}
-#prof:hover{background:#ffffff40}#prof[hidden]{display:none}.locked #prof{display:none}
+#prof:hover{background:#ffffff40}#prof[hidden]{display:none}
 @media(max-width:480px){#prof{width:36px;height:36px}}
 #prof svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #pf{position:fixed;inset:0;z-index:30;background:#000a;display:none;place-items:center;padding:16px;font-family:system-ui,sans-serif;color:#fff}
@@ -52,7 +52,7 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
 #pf .pr{display:flex;flex-direction:column;gap:3px}#pf .pr b{font-size:12px;font-weight:500;opacity:.75}
 #pf code{display:block;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;background:#0f172a;border-radius:8px;padding:8px;cursor:pointer}
 #pf [hidden]{display:none}
-#pf button.danger{background:#7f1d1d}
+#pf button.danger{background:#7f1d1d}#pf button.pri{background:#2563eb}#pf button[hidden]{display:none}
 #lk-tt{display:flex;align-items:center;gap:8px;font-size:13px;opacity:.85}#lk-tt input{width:auto}
 #ak{position:fixed;inset:0;z-index:31;background:#000a;display:none;place-items:center;padding:16px;font-family:system-ui,sans-serif;color:#fff}
 #ak.on{display:grid}
@@ -128,7 +128,7 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
   <div class="pr" id="pf-r2"><b>Addr</b><code id="pf-addr"></code></div>
   <div class="pr" id="pf-r3"><b>Pub (terkompresi)</b><code id="pf-pub"></code></div>
   <div class="pr" id="pf-r4"><b>Akun terdaftar</b><code id="pf-akun" style="cursor:default"></code></div>
-  <div class="row"><button id="pf-pw" type="button">Atur password</button><button id="pf-kelola" type="button" hidden>Kelola akun</button><button id="pf-out" type="button" class="danger" hidden>Keluar</button><button id="pf-close" type="button">Tutup</button></div>
+  <div class="row"><button id="pf-login" type="button" class="pri" hidden>Login</button><button id="pf-pw" type="button">Atur password</button><button id="pf-kelola" type="button" hidden>Kelola akun</button><button id="pf-out" type="button" class="danger" hidden>Keluar</button><button id="pf-close" type="button">Tutup</button></div>
 </div></div>
 <div id="ak"><div class="card">
   <h2>Kelola akun</h2>

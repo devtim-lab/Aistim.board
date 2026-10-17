@@ -197,12 +197,15 @@ async function bukaKunci() {
   $("lk-msg").textContent = "";
   setKunci(false);
 }
-$("login").addEventListener("click", (e) => {
+function mintaLogin(e) {
   e.preventDefault();
+  $("pf").classList.remove("on");
   document.body.classList.add("asking");
   $("lk-msg").textContent = "";
   $("lk-in").focus();
-});
+}
+$("login").addEventListener("click", mintaLogin);
+$("pf-login").addEventListener("click", mintaLogin);
 $("lk-batal").addEventListener("click", () => { document.body.classList.remove("asking"); $("lk-in").value = ""; $("lk-in").type = "password"; $("lk-msg").textContent = ""; $("lk-reset").hidden = true; });
 $("lk-ok").addEventListener("click", bukaKunci);
 // lupa password: hapus password dan hasil edit lokal (isi lokal tidak pernah terbaca tanpa password)
@@ -326,6 +329,17 @@ $("prof").addEventListener("click", async (e) => {
   e.preventDefault();
   const rec = await get("syncPass");
   const ada = !!(rec && rec.hash);
+  const lihat = locked; // mode lihat: menu hanya menawarkan Login
+  $("pf-login").hidden = !lihat;
+  $("pf-pw").hidden = lihat;
+  if (lihat) {
+    $("pf-p").textContent = "Belum login. Login dengan password untuk membuka edit, profil, dan pengaturan password.";
+    for (const id of ["pf-r1", "pf-r2", "pf-r3", "pf-r4"]) $(id).hidden = true;
+    $("pf-kelola").hidden = true;
+    $("pf-out").hidden = true;
+    $("pf").classList.add("on");
+    return;
+  }
   $("pf-p").textContent = ada
     ? "Pasangan kunci secp256k1 diturunkan dari passwordmu (SDK). Private key tidak disimpan. Ketuk nilai untuk menyalin."
     : "Belum ada password. Ketuk Atur password; hash, addr, dan pub diturunkan dari password itu.";
