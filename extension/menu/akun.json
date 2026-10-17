@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "akun": [
+    {
+      "nama": "Admin",
+      "addr": "0x36c988d628c2c8fc22e03dd50cb72424a23eef9d",
+      "pub": "02aeccc3dcbc2d7b97c9ffa46531e8c55cd119d11f4d7b5d02d3b4382c99c28ac2",
+      "role": "admin",
+      "script": [],
+      "dibuat": "2026-10-17T00:00:00.000Z"
+    }
+  ]
+}

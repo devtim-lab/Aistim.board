@@ -3,6 +3,7 @@
    Ditampilkan di iframe sandbox: HTML dan CSS berjalan, skrip tidak. */
 const URL_SYNC = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/sync.html";
 const URL_SIG = URL_SYNC + ".sig";
+const URL_AKUN = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/akun.json";
 const DEFAULT_HTML = '<!doctype html><meta charset="utf-8"><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0f172a;color:#fff;font-family:system-ui"><h1 style="font-weight:300;font-size:64px">Hallo</h1>';
 const $ = (id) => document.getElementById(id);
 const GH = { owner: "devtim-lab", repo: "Aistim.board", path: "data/sync.html", branch: "main" };
@@ -253,6 +254,45 @@ $("pw-del").addEventListener("click", async () => {
   $("pw").classList.remove("on");
   note("Password dihapus");
 });
+// daftar akun (akun.json): salinan bawaan di extension, diperbarui dari GitHub hanya bila bertanda tangan admin
+const alamatDari = (pub) => "0x" + hx(Keccak.keccak256(Secp256k1.utils.hexToBytes(Secp256k1.Point.fromHex(pub).toHex(false).slice(2))).slice(-20));
+function akunSah(j) {
+  try {
+    if (!j || j.version !== 1 || !Array.isArray(j.akun) || !j.akun.length || j.akun.length > 200) return false;
+    return j.akun.every((a) => a && typeof a.nama === "string" && a.nama.length > 0 && a.nama.length <= 40 &&
+      /^0[23][0-9a-f]{64}$/.test(a.pub) && (a.role === "admin" || a.role === "user") && String(a.addr).toLowerCase() === alamatDari(a.pub));
+  } catch (e) { return false; }
+}
+async function akunLokal() {
+  const c = await get("akunV");
+  if (akunSah(c)) return c;
+  try { const j = await (await fetch("akun.json")).json(); if (akunSah(j)) return j; } catch (e) {}
+  return null;
+}
+async function akunRemote() {
+  try {
+    const [r, sg] = await Promise.all([fetch(URL_AKUN, { cache: "no-cache" }), fetch(URL_AKUN + ".sig", { cache: "no-cache" })]);
+    if (!r.ok || !sg.ok) return null;
+    const buf = new Uint8Array(await r.arrayBuffer());
+    if (!AistimVerify.cek("akun.json", buf, await sg.text())) return null; // tanda tangan admin tidak cocok: abaikan
+    const j = JSON.parse(new TextDecoder().decode(buf));
+    if (!akunSah(j)) return null;
+    await put({ akunV: j });
+    return j;
+  } catch (e) { return null; }
+}
+function hasilAkun(list, rec) {
+  if (!list) return "Daftar akun tidak tersedia";
+  const a = list.akun.find((x) => x.addr.toLowerCase() === String(rec.addr).toLowerCase());
+  if (!a) return "Tidak terdaftar";
+  return a.pub === rec.pub ? a.nama + " (" + a.role + ")" : "Alamat terdaftar tetapi pub tidak cocok";
+}
+async function tampilAkun(rec) {
+  $("pf-akun").textContent = hasilAkun(await akunLokal(), rec);
+  const r = await akunRemote();
+  if (r && $("pf").classList.contains("on")) $("pf-akun").textContent = hasilAkun(r, rec);
+}
+
 // ikon profil: hash password, addr, pub (diturunkan dari password lewat SDK)
 $("prof").addEventListener("click", async (e) => {
   e.preventDefault();
@@ -261,9 +301,13 @@ $("prof").addEventListener("click", async (e) => {
   $("pf-p").textContent = ada
     ? "Pasangan kunci secp256k1 diturunkan dari passwordmu (SDK). Private key tidak disimpan. Ketuk nilai untuk menyalin."
     : "Belum ada password. Buat password lewat ikon gembok; hash, addr, dan pub diturunkan dari password itu.";
-  for (const id of ["pf-r1", "pf-r2", "pf-r3"]) $(id).hidden = !ada;
+  for (const id of ["pf-r1", "pf-r2", "pf-r3", "pf-r4"]) $(id).hidden = !ada;
   $("pf-out").hidden = !ada;
-  if (ada) { $("pf-hash").textContent = rec.hash; $("pf-addr").textContent = rec.addr || "-"; $("pf-pub").textContent = rec.pub || "-"; }
+  if (ada) {
+    $("pf-hash").textContent = rec.hash; $("pf-addr").textContent = rec.addr || "-"; $("pf-pub").textContent = rec.pub || "-";
+    $("pf-akun").textContent = "Memeriksa…";
+    tampilAkun(rec);
+  }
   $("pf").classList.add("on");
 });
 $("pf-close").addEventListener("click", () => $("pf").classList.remove("on"));

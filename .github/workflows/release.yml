@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Periksa akun.json
+        run: node tools/cek-akun.mjs
       - name: Build ZIP
         run: |
           VERSION=$(python3 -c "import json;print(json.load(open('extension/manifest.json'))['version'])")
