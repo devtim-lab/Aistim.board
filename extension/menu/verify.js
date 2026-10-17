@@ -1,4 +1,4 @@
-/* Verifikasi data dari GitHub: tanda tangan ECDSA secp256k1 (library: lib/secp256k1.js, dari SDK Aistim).
+/* Verifikasi data dari GitHub: tanda tangan ECDSA secp256k1 (library: ../sdk/secp256k1.js, dari SDK Aistim).
    Data (data/tiles.json, data/sync.html) hanya dipakai bila ada berkas <nama>.sig yang cocok dengan public key admin di bawah.
    Ini hanya memeriksa data, tidak ada kode yang diunduh atau dijalankan. Tanda tangan dibuat offline oleh admin (tools/sign.mjs). */
 (() => {
