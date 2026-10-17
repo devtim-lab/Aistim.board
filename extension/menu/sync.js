@@ -36,6 +36,7 @@ async function loadViews() { const v = await get("views"); return Array.isArray(
     return;
   }
   $("lock").hidden = false;
+  $("prof").hidden = false;
   const pr = await get("syncPass");
   if (pr && pr.hash) { locked = true; document.body.classList.add("locked"); $("lk-in").focus(); }
   const r = await get("syncHtmlV");
@@ -98,13 +99,25 @@ function note(t) {
 /* ---------- Password Aistim.sync (hanya hash PBKDF2-SHA256 + salt yang disimpan, bukan passwordnya) ---------- */
 const PW_ITER = 200000;
 const hx = (u) => Array.from(new Uint8Array(u), (b) => b.toString(16).padStart(2, "0")).join("");
+const hexBytes = (h) => Uint8Array.from(h.match(/../g).map((x) => parseInt(x, 16)));
+async function pbkdf(pw, saltHex, iter) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: hexBytes(saltHex), iterations: iter }, key, 256));
+}
 // v1: PBKDF2-SHA256. v2: PBKDF2-SHA256 lalu HKDF dari SDK (Secp256k1.utils.hkdf) dengan info "aistim-sync-pw".
 async function hashPw(pw, saltHex, iter, v) {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
-  const salt = Uint8Array.from(saltHex.match(/../g).map((h) => parseInt(h, 16)));
-  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: iter }, key, 256));
-  if (v === 2) return hx(Secp256k1.utils.hkdf(bits, salt, new TextEncoder().encode("aistim-sync-pw"), 32));
+  const bits = await pbkdf(pw, saltHex, iter);
+  if (v === 2) return hx(Secp256k1.utils.hkdf(bits, hexBytes(saltHex), new TextEncoder().encode("aistim-sync-pw"), 32));
   return hx(bits);
+}
+// pasangan kunci dari password (secp256k1, SDK): private key = HKDF(PBKDF2(password)), tidak disimpan; pub dan addr (keccak256) disimpan
+async function profilDari(pw, saltHex, iter) {
+  const bits = await pbkdf(pw, saltHex, iter);
+  const priv = hx(Secp256k1.utils.hkdf(bits, hexBytes(saltHex), new TextEncoder().encode("aistim-sync-key"), 32));
+  const pub = Secp256k1.getPublicKey(priv, true);
+  const tak = Secp256k1.getPublicKey(priv, false); // 04 + x + y
+  const addr = "0x" + hx(Keccak.keccak256(Secp256k1.utils.hexToBytes(tak.slice(2))).slice(-20));
+  return { pub, addr };
 }
 async function cekPw(pw, rec) {
   if (!rec || typeof rec.hash !== "string" || typeof rec.salt !== "string") return false;
@@ -119,8 +132,12 @@ async function bukaKunci() {
   if (!pw) return;
   $("lk-ok").disabled = true;
   if (gagalPw) await new Promise((r) => setTimeout(r, Math.min(gagalPw, 5) * 1000)); // jeda makin lama setelah salah
-  const benar = await cekPw(pw, await get("syncPass"));
+  const rec0 = await get("syncPass");
+  const benar = await cekPw(pw, rec0);
   $("lk-ok").disabled = false;
+  if (benar && !(rec0.pub && rec0.addr)) { // rekam lama: lengkapi pub dan addr
+    try { await put({ syncPass: { ...rec0, ...(await profilDari(pw, rec0.salt, rec0.iter)) } }); } catch (e) {}
+  }
   if (!benar) { gagalPw++; $("lk-msg").textContent = "Password salah."; $("lk-in").select(); return; }
   gagalPw = 0;
   $("lk-in").value = "";
@@ -168,7 +185,8 @@ $("pw-save").addEventListener("click", async () => {
   if (a !== $("pw-new2").value) { $("pw-msg").textContent = "Pengulangan tidak sama."; return; }
   const salt = hx(crypto.getRandomValues(new Uint8Array(16)));
   const hash = await hashPw(a, salt, PW_ITER, 2);
-  if (!(await put({ syncPass: { v: 2, salt, iter: PW_ITER, hash } }))) { $("pw-msg").textContent = "Gagal menyimpan."; return; }
+  const pr = await profilDari(a, salt, PW_ITER);
+  if (!(await put({ syncPass: { v: 2, salt, iter: PW_ITER, hash, ...pr } }))) { $("pw-msg").textContent = "Gagal menyimpan."; return; }
   $("pw").classList.remove("on");
   for (const id of ["pw-new", "pw-new2"]) { $(id).type = "password"; $(id).value = ""; }
   note("Password disimpan");
@@ -178,6 +196,25 @@ $("pw-del").addEventListener("click", async () => {
   try { await chrome.storage.local.remove("syncPass"); } catch (e) { $("pw-msg").textContent = "Gagal menghapus."; return; }
   $("pw").classList.remove("on");
   note("Password dihapus");
+});
+// ikon profil: hash password, addr, pub (diturunkan dari password lewat SDK)
+$("prof").addEventListener("click", async (e) => {
+  e.preventDefault();
+  const rec = await get("syncPass");
+  const ada = !!(rec && rec.hash);
+  $("pf-p").textContent = ada
+    ? "Pasangan kunci secp256k1 diturunkan dari passwordmu (SDK). Private key tidak disimpan. Ketuk nilai untuk menyalin."
+    : "Belum ada password. Buat password lewat ikon gembok; hash, addr, dan pub diturunkan dari password itu.";
+  for (const id of ["pf-r1", "pf-r2", "pf-r3"]) $(id).hidden = !ada;
+  if (ada) { $("pf-hash").textContent = rec.hash; $("pf-addr").textContent = rec.addr || "-"; $("pf-pub").textContent = rec.pub || "-"; }
+  $("pf").classList.add("on");
+});
+$("pf-close").addEventListener("click", () => $("pf").classList.remove("on"));
+for (const id of ["pf-hash", "pf-addr", "pf-pub"]) $(id).addEventListener("click", async () => {
+  const t = $(id).textContent;
+  if (!t || t === "-") return;
+  await salin(t);
+  $("pf-p").textContent = "Tersalin: " + t.slice(0, 12) + "…";
 });
 async function salin(text) {
   try { await navigator.clipboard.writeText(text); note("Tersalin"); return; } catch (e) {}
