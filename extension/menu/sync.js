@@ -12,8 +12,8 @@ const frame = $("v");
 const ok = (h) => typeof h === "string" && h.length > 0 && h.length < 500000;
 let remote = DEFAULT_HTML; // salinan GitHub / bawaan
 let local = null; // salinan hasil edit di perangkat ini
-let locked = false; // true selama password belum dimasukkan
-const current = () => (ok(local) ? local : remote);
+let locked = false; // true selama password ada tetapi belum dimasukkan (mode lihat: hanya salinan GitHub, alat edit tersembunyi)
+const current = () => (!locked && ok(local) ? local : remote);
 
 async function get(k) {
   try { return (await chrome.storage.local.get(k))[k]; } catch (e) { return undefined; }
@@ -21,8 +21,19 @@ async function get(k) {
 async function put(o) {
   try { await chrome.storage.local.set(o); return true; } catch (e) { return false; }
 }
+// mode lihat: password ada tetapi belum login. Hanya salinan GitHub yang tampil; edit, salin, unduh, impor, upload tersembunyi
+function setKunci(v) {
+  locked = v;
+  document.body.classList.toggle("locked", v);
+  if (!v) document.body.classList.remove("asking");
+  $("login").hidden = !v;
+  if (v) {
+    for (const id of ["ed", "tk", "pw", "pf", "ak"]) { const e = $(id); if (e) e.classList.remove("on"); }
+    akDraft = null; akRec = null;
+  }
+  render();
+}
 function render() {
-  if (locked) return;
   frame.srcdoc = current();
   $("reset").hidden = VIEW_ID ? true : !ok(local);
 }
@@ -36,12 +47,11 @@ async function loadViews() { const v = await get("views"); return Array.isArray(
     render();
     return;
   }
-  $("lock").hidden = false;
   $("prof").hidden = false;
   const pr = await get("syncPass");
   if (pr && pr.hash) {
     if (await sesiSah(pr)) await sesi.buat(pr.hash); // masih masuk: perpanjang
-    else { locked = true; document.body.classList.add("locked"); $("lk-in").focus(); }
+    else setKunci(true);
   }
   const r = await get("syncHtmlV");
   if (ok(r)) remote = r;
@@ -185,10 +195,15 @@ async function bukaKunci() {
   $("lk-in").value = "";
   $("lk-in").type = "password";
   $("lk-msg").textContent = "";
-  locked = false;
-  document.body.classList.remove("locked");
-  render();
+  setKunci(false);
 }
+$("login").addEventListener("click", (e) => {
+  e.preventDefault();
+  document.body.classList.add("asking");
+  $("lk-msg").textContent = "";
+  $("lk-in").focus();
+});
+$("lk-batal").addEventListener("click", () => { document.body.classList.remove("asking"); $("lk-in").value = ""; $("lk-in").type = "password"; $("lk-msg").textContent = ""; $("lk-reset").hidden = true; });
 $("lk-ok").addEventListener("click", bukaKunci);
 // lupa password: hapus password dan hasil edit lokal (isi lokal tidak pernah terbaca tanpa password)
 $("lk-lupa").addEventListener("click", () => { $("lk-reset").hidden = false; });
@@ -198,12 +213,10 @@ $("lk-reset-ok").addEventListener("click", async () => {
   await sesi.hapus();
   local = null;
   gagalPw = 0;
-  locked = false;
   $("lk-reset").hidden = true;
   $("lk-in").value = "";
   $("lk-msg").textContent = "";
-  document.body.classList.remove("locked");
-  render();
+  setKunci(false);
   note("Password dan edit lokal dihapus");
 });
 $("lk-in").addEventListener("keydown", (e) => { if (e.key === "Enter") bukaKunci(); });
@@ -221,7 +234,7 @@ async function bukaPw(e) {
   $("pw").classList.add("on");
   (punyaPw ? $("pw-old") : $("pw-new")).focus();
 }
-$("lock").addEventListener("click", bukaPw);
+$("pf-pw").addEventListener("click", (e) => { $("pf").classList.remove("on"); bukaPw(e); });
 $("pw-cancel").addEventListener("click", () => { $("pw").classList.remove("on"); for (const id of ["pw-old", "pw-new", "pw-new2"]) $(id).type = "password"; });
 async function pwLama() {
   if (!punyaPw) return true;
@@ -238,6 +251,7 @@ $("pw-save").addEventListener("click", async () => {
   const hash = await hashPw(a, salt, PW_ITER, 2);
   const pr = await profilDari(a, salt, PW_ITER);
   if (!(await put({ syncPass: { v: 2, salt, iter: PW_ITER, hash, ...pr } }))) { $("pw-msg").textContent = "Gagal menyimpan."; return; }
+  await sesi.buat(hash); // yang baru saja membuat atau mengubah password tetap masuk
   $("pw").classList.remove("on");
   for (const id of ["pw-new", "pw-new2"]) { $(id).type = "password"; $(id).value = ""; }
   note("Password disimpan");
@@ -314,7 +328,7 @@ $("prof").addEventListener("click", async (e) => {
   const ada = !!(rec && rec.hash);
   $("pf-p").textContent = ada
     ? "Pasangan kunci secp256k1 diturunkan dari passwordmu (SDK). Private key tidak disimpan. Ketuk nilai untuk menyalin."
-    : "Belum ada password. Buat password lewat ikon gembok; hash, addr, dan pub diturunkan dari password itu.";
+    : "Belum ada password. Ketuk Atur password; hash, addr, dan pub diturunkan dari password itu.";
   for (const id of ["pf-r1", "pf-r2", "pf-r3", "pf-r4"]) $(id).hidden = !ada;
   $("pf-kelola").hidden = true;
   $("pf-out").hidden = !ada;
@@ -329,17 +343,8 @@ $("pf-close").addEventListener("click", () => $("pf").classList.remove("on"));
 // keluar: hapus sesi dan kunci lagi sekarang juga
 $("pf-out").addEventListener("click", async () => {
   await sesi.hapus();
-  locked = true;
-  frame.srcdoc = "";
-  $("ed").classList.remove("on");
-  $("tk") && $("tk").classList.remove("on");
-  $("pw").classList.remove("on");
-  $("pf").classList.remove("on");
-  $("ak").classList.remove("on");
-  akDraft = null; akRec = null;
-  document.body.classList.add("locked");
-  $("lk-msg").textContent = "Kamu sudah keluar.";
-  $("lk-in").focus();
+  setKunci(true);
+  note("Kamu sudah keluar");
 });
 for (const id of ["pf-hash", "pf-addr", "pf-pub"]) $(id).addEventListener("click", async () => {
   const t = $(id).textContent;

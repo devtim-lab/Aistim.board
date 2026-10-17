@@ -23,9 +23,9 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
 #tk button.pri{background:#2563eb}#tk #tk-del{background:#7f1d1d}
 #tk-msg{margin-right:auto;font-size:12px;opacity:.85}
 #lk,#pw{position:fixed;inset:0;display:none;place-items:center;padding:16px;font-family:system-ui,sans-serif;color:#fff}
-#lk{z-index:4;background:#0f172a}#pw{z-index:30;background:#000a}
-.locked #lk,#pw.on{display:grid}
-.locked #bar .ico:not(#back){display:none}
+#lk{z-index:30;background:#000a}#pw{z-index:30;background:#000a}
+.asking #lk,#pw.on{display:grid}
+.locked #bar .ico:not(#back):not(#login){display:none}
 #lk .card,#pw .card{width:min(380px,100%);background:#1e293b;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
 #lk h2,#pw h2{margin:0;font-size:17px;font-weight:600}#pw p{margin:0;font-size:12px;line-height:1.4;opacity:.7}
 #lk input,#pw input{width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#fff;font:14px system-ui,sans-serif}
@@ -95,7 +95,7 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
   <a id="cp" href="#" class="ico" title="Salin HTML" aria-label="Salin HTML"><svg viewBox="0 0 24 24"><path d="M9 9h11v11H9zM5 15H4V4h11v1"/></svg></a>
   <a id="dl" href="#" class="ico" title="Unduh HTML" aria-label="Unduh HTML"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg></a>
   <a id="imp" href="#" class="ico" title="Impor file HTML" aria-label="Impor file HTML"><svg viewBox="0 0 24 24"><path d="M12 16V5M7 9l5-5 5 5M5 20h14"/></svg></a>
-  <a id="lock" href="#" class="ico" title="Password Aistim.sync" aria-label="Password Aistim.sync" hidden><svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v10H5zM12 15v2"/></svg></a>
+  <a id="login" href="#" class="ico" title="Login" aria-label="Login" hidden><svg viewBox="0 0 24 24"><path d="M14 4h5v16h-5M10 8l4 4-4 4M14 12H4"/></svg></a>
 <!--PRO-->
   <a id="gh" href="#" class="ico" title="Upload ke GitHub" aria-label="Upload ke GitHub" hidden><svg viewBox="0 0 24 24"><path d="M7 18a4 4 0 01-.5-8 5.500 5.500 0 0110.500-1A4.500 4.500 0 0117 18M12 20v-7M9 15l3-3 3 3"/></svg></a>
   <a id="key" href="#" class="ico" title="Token GitHub" aria-label="Token GitHub" hidden><svg viewBox="0 0 24 24"><path d="M15 7a4 4 0 11-3.900 4.900L4 19v2h3v-2h2v-2h2l1.900-1.900A4 4 0 0115 7z"/></svg></a>
@@ -128,7 +128,7 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
   <div class="pr" id="pf-r2"><b>Addr</b><code id="pf-addr"></code></div>
   <div class="pr" id="pf-r3"><b>Pub (terkompresi)</b><code id="pf-pub"></code></div>
   <div class="pr" id="pf-r4"><b>Akun terdaftar</b><code id="pf-akun" style="cursor:default"></code></div>
-  <div class="row"><button id="pf-kelola" type="button" hidden>Kelola akun</button><button id="pf-out" type="button" class="danger" hidden>Keluar</button><button id="pf-close" type="button">Tutup</button></div>
+  <div class="row"><button id="pf-pw" type="button">Atur password</button><button id="pf-kelola" type="button" hidden>Kelola akun</button><button id="pf-out" type="button" class="danger" hidden>Keluar</button><button id="pf-close" type="button">Tutup</button></div>
 </div></div>
 <div id="ak"><div class="card">
   <h2>Kelola akun</h2>
@@ -154,7 +154,7 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
 <div id="lk"><div class="card">
   <h2>Masuk ke Aistim.sync</h2>
   <input id="lk-in" type="password" placeholder="Password" autocomplete="current-password" autocapitalize="off">
-  <div class="row"><span id="lk-msg"></span><button id="lk-lupa" type="button">Lupa password?</button><button id="lk-ok" class="pri" type="button">Masuk</button></div>
+  <div class="row"><span id="lk-msg"></span><button id="lk-batal" type="button">Batal</button><button id="lk-lupa" type="button">Lupa password?</button><button id="lk-ok" class="pri" type="button">Masuk</button></div>
   <label id="lk-tt"><input id="lk-tetap" type="checkbox" checked> Tetap masuk 30 menit</label>
   <div id="lk-reset" hidden>
     <p>Reset menghapus password <b>dan hasil edit lokal</b> Aistim.sync di perangkat ini. Data di GitHub tidak terpengaruh. Isi lokal tidak bisa dibaca tanpa password, hanya bisa dihapus.</p>
