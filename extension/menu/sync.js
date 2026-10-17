@@ -26,12 +26,18 @@ function setKunci(v) {
   locked = v;
   document.body.classList.toggle("locked", v);
   if (!v) document.body.classList.remove("asking");
-  $("login").hidden = !v;
+  segarLogin();
   if (v) {
     for (const id of ["ed", "tk", "pw", "pf", "ak"]) { const e = $(id); if (e) e.classList.remove("on"); }
     akDraft = null; akRec = null;
   }
   render();
+}
+// ikon Login terlihat selama belum login; bila belum ada password, ketukannya membuka dialog buat password
+async function segarLogin() {
+  if (VIEW_ID) return;
+  const rec = await get("syncPass");
+  $("login").hidden = !(locked || !(rec && rec.hash));
 }
 function render() {
   frame.srcdoc = current();
@@ -53,6 +59,7 @@ async function loadViews() { const v = await get("views"); return Array.isArray(
     if (await sesiSah(pr)) await sesi.buat(pr.hash); // masih masuk: perpanjang
     else setKunci(true);
   }
+  segarLogin();
   const r = await get("syncHtmlV");
   if (ok(r)) remote = r;
   const l = await get("syncLocal");
@@ -204,7 +211,7 @@ function mintaLogin(e) {
   $("lk-msg").textContent = "";
   $("lk-in").focus();
 }
-$("login").addEventListener("click", mintaLogin);
+$("login").addEventListener("click", (e) => { if (locked) mintaLogin(e); else bukaPw(e); });
 $("pf-login").addEventListener("click", mintaLogin);
 $("lk-batal").addEventListener("click", () => { document.body.classList.remove("asking"); $("lk-in").value = ""; $("lk-in").type = "password"; $("lk-msg").textContent = ""; $("lk-reset").hidden = true; });
 $("lk-ok").addEventListener("click", bukaKunci);
@@ -254,6 +261,7 @@ $("pw-save").addEventListener("click", async () => {
   const hash = await hashPw(a, salt, PW_ITER, 2);
   const pr = await profilDari(a, salt, PW_ITER);
   if (!(await put({ syncPass: { v: 2, salt, iter: PW_ITER, hash, ...pr } }))) { $("pw-msg").textContent = "Gagal menyimpan."; return; }
+  segarLogin();
   await sesi.buat(hash); // yang baru saja membuat atau mengubah password tetap masuk
   $("pw").classList.remove("on");
   for (const id of ["pw-new", "pw-new2"]) { $(id).type = "password"; $(id).value = ""; }
@@ -263,6 +271,7 @@ $("pw-del").addEventListener("click", async () => {
   if (!(await pwLama())) return;
   try { await chrome.storage.local.remove("syncPass"); } catch (e) { $("pw-msg").textContent = "Gagal menghapus."; return; }
   await sesi.hapus();
+  segarLogin();
   $("pw").classList.remove("on");
   note("Password dihapus");
 });
