@@ -140,6 +140,29 @@ async function sesiSah(rec) {
   const s = await sesi.ambil();
   return !!(s && rec && s.h === rec.hash && s.sampai > Date.now());
 }
+// ikon mata: tampilkan atau sembunyikan password di kolom isian
+const MATA = '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const MATA_CORET = '<svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path d="M3 3l18 18"/></svg>';
+function pasangMata(inp) {
+  const w = document.createElement("span");
+  w.className = "pwf";
+  inp.replaceWith(w);
+  w.append(inp);
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "eye";
+  w.append(b);
+  const segarkan = () => {
+    const lihat = inp.type === "text";
+    b.innerHTML = lihat ? MATA_CORET : MATA;
+    b.title = lihat ? "Sembunyikan password" : "Tampilkan password";
+    b.setAttribute("aria-label", b.title);
+  };
+  b.addEventListener("click", () => { inp.type = inp.type === "password" ? "text" : "password"; inp.focus(); });
+  new MutationObserver(segarkan).observe(inp, { attributes: true, attributeFilter: ["type"] });
+  segarkan();
+}
+for (const id of ["lk-in", "pw-old", "pw-new", "pw-new2"]) pasangMata($(id));
 let gagalPw = 0;
 async function bukaKunci() {
   const pw = $("lk-in").value;
@@ -156,6 +179,7 @@ async function bukaKunci() {
   gagalPw = 0;
   if ($("lk-tetap").checked) await sesi.buat(rec0.hash);
   $("lk-in").value = "";
+  $("lk-in").type = "password";
   $("lk-msg").textContent = "";
   locked = false;
   document.body.classList.remove("locked");
@@ -185,7 +209,7 @@ async function bukaPw(e) {
   e.preventDefault();
   const rec = await get("syncPass");
   punyaPw = !!(rec && rec.hash);
-  for (const id of ["pw-old", "pw-new", "pw-new2"]) $(id).value = "";
+  for (const id of ["pw-old", "pw-new", "pw-new2"]) { $(id).value = ""; $(id).type = "password"; }
   $("pw-old").hidden = !punyaPw;
   $("pw-del").hidden = !punyaPw;
   $("pw-t").textContent = punyaPw ? "Ubah password Aistim.sync" : "Buat password Aistim.sync";
@@ -194,7 +218,7 @@ async function bukaPw(e) {
   (punyaPw ? $("pw-old") : $("pw-new")).focus();
 }
 $("lock").addEventListener("click", bukaPw);
-$("pw-cancel").addEventListener("click", () => { $("pw").classList.remove("on"); for (const id of ["pw-new", "pw-new2"]) $(id).type = "password"; });
+$("pw-cancel").addEventListener("click", () => { $("pw").classList.remove("on"); for (const id of ["pw-old", "pw-new", "pw-new2"]) $(id).type = "password"; });
 // password acak dari SDK (Secp256k1.utils.randomBytes): 24 karakter hex, ditampilkan agar bisa dicatat
 $("pw-gen").addEventListener("click", async () => {
   const pw = Secp256k1.utils.bytesToHex(Secp256k1.utils.randomBytes(12));
