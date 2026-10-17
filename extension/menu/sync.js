@@ -38,7 +38,10 @@ async function loadViews() { const v = await get("views"); return Array.isArray(
   $("lock").hidden = false;
   $("prof").hidden = false;
   const pr = await get("syncPass");
-  if (pr && pr.hash) { locked = true; document.body.classList.add("locked"); $("lk-in").focus(); }
+  if (pr && pr.hash) {
+    if (await sesiSah(pr)) await sesi.buat(pr.hash); // masih masuk: perpanjang
+    else { locked = true; document.body.classList.add("locked"); $("lk-in").focus(); }
+  }
   const r = await get("syncHtmlV");
   if (ok(r)) remote = r;
   const l = await get("syncLocal");
@@ -126,6 +129,17 @@ async function cekPw(pw, rec) {
   for (let i = 0; i < h.length; i++) d |= h.charCodeAt(i) ^ rec.hash.charCodeAt(i);
   return d === 0;
 }
+// sesi masuk: disimpan di chrome.storage.session (hilang saat browser ditutup), terikat ke hash password yang berlaku
+const SESI_MS = 30 * 60 * 1000;
+const sesi = {
+  async ambil() { try { return (await chrome.storage.session.get("syncSesi")).syncSesi; } catch (e) { return undefined; } },
+  async buat(hash) { try { await chrome.storage.session.set({ syncSesi: { h: hash, sampai: Date.now() + SESI_MS } }); } catch (e) {} },
+  async hapus() { try { await chrome.storage.session.remove("syncSesi"); } catch (e) {} },
+};
+async function sesiSah(rec) {
+  const s = await sesi.ambil();
+  return !!(s && rec && s.h === rec.hash && s.sampai > Date.now());
+}
 let gagalPw = 0;
 async function bukaKunci() {
   const pw = $("lk-in").value;
@@ -140,6 +154,7 @@ async function bukaKunci() {
   }
   if (!benar) { gagalPw++; $("lk-msg").textContent = "Password salah."; $("lk-in").select(); return; }
   gagalPw = 0;
+  if ($("lk-tetap").checked) await sesi.buat(rec0.hash);
   $("lk-in").value = "";
   $("lk-msg").textContent = "";
   locked = false;
@@ -152,6 +167,7 @@ $("lk-lupa").addEventListener("click", () => { $("lk-reset").hidden = false; });
 $("lk-reset-no").addEventListener("click", () => { $("lk-reset").hidden = true; });
 $("lk-reset-ok").addEventListener("click", async () => {
   try { await chrome.storage.local.remove(["syncPass", "syncLocal"]); } catch (e) { $("lk-msg").textContent = "Gagal mereset."; return; }
+  await sesi.hapus();
   local = null;
   gagalPw = 0;
   locked = false;
@@ -209,6 +225,7 @@ $("pw-save").addEventListener("click", async () => {
 $("pw-del").addEventListener("click", async () => {
   if (!(await pwLama())) return;
   try { await chrome.storage.local.remove("syncPass"); } catch (e) { $("pw-msg").textContent = "Gagal menghapus."; return; }
+  await sesi.hapus();
   $("pw").classList.remove("on");
   note("Password dihapus");
 });
@@ -221,10 +238,24 @@ $("prof").addEventListener("click", async (e) => {
     ? "Pasangan kunci secp256k1 diturunkan dari passwordmu (SDK). Private key tidak disimpan. Ketuk nilai untuk menyalin."
     : "Belum ada password. Buat password lewat ikon gembok; hash, addr, dan pub diturunkan dari password itu.";
   for (const id of ["pf-r1", "pf-r2", "pf-r3"]) $(id).hidden = !ada;
+  $("pf-out").hidden = !ada;
   if (ada) { $("pf-hash").textContent = rec.hash; $("pf-addr").textContent = rec.addr || "-"; $("pf-pub").textContent = rec.pub || "-"; }
   $("pf").classList.add("on");
 });
 $("pf-close").addEventListener("click", () => $("pf").classList.remove("on"));
+// keluar: hapus sesi dan kunci lagi sekarang juga
+$("pf-out").addEventListener("click", async () => {
+  await sesi.hapus();
+  locked = true;
+  frame.srcdoc = "";
+  $("ed").classList.remove("on");
+  $("tk") && $("tk").classList.remove("on");
+  $("pw").classList.remove("on");
+  $("pf").classList.remove("on");
+  document.body.classList.add("locked");
+  $("lk-msg").textContent = "Kamu sudah keluar.";
+  $("lk-in").focus();
+});
 for (const id of ["pf-hash", "pf-addr", "pf-pub"]) $(id).addEventListener("click", async () => {
   const t = $(id).textContent;
   if (!t || t === "-") return;

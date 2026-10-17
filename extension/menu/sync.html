@@ -46,6 +46,8 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
 #pf .pr{display:flex;flex-direction:column;gap:3px}#pf .pr b{font-size:12px;font-weight:500;opacity:.75}
 #pf code{display:block;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;word-break:break-all;background:#0f172a;border-radius:8px;padding:8px;cursor:pointer}
 #pf [hidden]{display:none}
+#pf button.danger{background:#7f1d1d}
+#lk-tt{display:flex;align-items:center;gap:8px;font-size:13px;opacity:.85}#lk-tt input{width:auto}
 #pf .row{display:flex;justify-content:flex-end;gap:8px}
 #pf button{border:0;border-radius:8px;padding:9px 14px;font-size:14px;color:#fff;background:#334155;cursor:pointer}
 #note{font:12px system-ui,sans-serif;color:#fff;background:#00000066;border-radius:12px;padding:4px 10px}
@@ -100,12 +102,13 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
   <div class="pr" id="pf-r1"><b>Hash password</b><code id="pf-hash"></code></div>
   <div class="pr" id="pf-r2"><b>Addr</b><code id="pf-addr"></code></div>
   <div class="pr" id="pf-r3"><b>Pub (terkompresi)</b><code id="pf-pub"></code></div>
-  <div class="row"><button id="pf-close" type="button">Tutup</button></div>
+  <div class="row"><button id="pf-out" type="button" class="danger" hidden>Keluar</button><button id="pf-close" type="button">Tutup</button></div>
 </div></div>
 <div id="lk"><div class="card">
-  <h2>Aistim.sync terkunci</h2>
+  <h2>Masuk ke Aistim.sync</h2>
   <input id="lk-in" type="password" placeholder="Password" autocomplete="current-password" autocapitalize="off">
-  <div class="row"><span id="lk-msg"></span><button id="lk-lupa" type="button">Lupa password?</button><button id="lk-ok" class="pri" type="button">Buka</button></div>
+  <div class="row"><span id="lk-msg"></span><button id="lk-lupa" type="button">Lupa password?</button><button id="lk-ok" class="pri" type="button">Masuk</button></div>
+  <label id="lk-tt"><input id="lk-tetap" type="checkbox" checked> Tetap masuk 30 menit</label>
   <div id="lk-reset" hidden>
     <p>Reset menghapus password <b>dan hasil edit lokal</b> Aistim.sync di perangkat ini. Data di GitHub tidak terpengaruh. Isi lokal tidak bisa dibaca tanpa password, hanya bisa dihapus.</p>
     <div class="row"><button id="lk-reset-no" type="button">Batal</button><button id="lk-reset-ok" class="danger" type="button">Reset dan hapus</button></div>
