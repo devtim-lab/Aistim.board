@@ -432,6 +432,8 @@ async function openEditor(target) {
   editing = target;
   let html = DEFAULT_VIEW_HTML;
   if (target.kind === "sync") {
+    const pw = await store.get("syncPass", null);
+    if (pw && pw.hash) return msg("Aistim.sync terkunci. Buka lewat Aistim.sync dengan password.");
     html = (await store.get("syncLocal", "")) || (await store.get("syncHtmlV", "")) || html;
     $("ed-title").textContent = "Edit HTML: Aistim.sync";
     $("ed-reset").hidden = !(await store.get("syncLocal", ""));

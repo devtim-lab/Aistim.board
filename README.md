@@ -55,6 +55,10 @@ AISTIM_ADMIN_KEY=<64 hex> node tools/sign.mjs data/tiles.json data/sync.html
 
 Commit dan push berkas `*.sig` bersama datanya. Di versi lengkap, upload dari Aistim.sync otomatis ikut menandatangani `data/sync.html.sig` bila key admin (hex) tersimpan lewat ikon kunci di Board.
 
+## Password Aistim.sync
+
+Ikon gembok di Aistim.sync membuat, mengubah, atau menghapus password. Yang disimpan hanya hash (PBKDF2-SHA256, 200.000 putaran, salt acak 16 byte) di `chrome.storage.local` (`syncPass`), bukan passwordnya. Saat password aktif, Aistim.sync meminta password dulu: isi HTML tidak dimuat, ikon edit/salin/unduh disembunyikan, editor Aistim.sync di Pengaturan menolak membuka, dan salah memasukkan membuat jeda makin lama. Ini penguncian tampilan di perangkat itu saja; HTML-nya sendiri tidak dienkripsi, jadi tidak melindungi dari orang yang bisa membuka profil browser.
+
 ## Tampilan buatan sendiri
 
 Di Pengaturan → tab **Menu** ada tabel CRUD: tambah menu baru (maksimal 20), pakai, edit HTML, ubah nama, hapus. Pilih tampilannya di daftar **Tampilan**. Isi HTML diedit lewat tautan **Edit** di footer tampilan itu (juga ada Salin, Unduh, Impor file). Semua tersimpan di perangkat (`chrome.storage.local`), tanpa upload dan tanpa pasang ulang.

@@ -11,6 +11,7 @@ const frame = $("v");
 const ok = (h) => typeof h === "string" && h.length > 0 && h.length < 500000;
 let remote = DEFAULT_HTML; // salinan GitHub / bawaan
 let local = null; // salinan hasil edit di perangkat ini
+let locked = false; // true selama password belum dimasukkan
 const current = () => (ok(local) ? local : remote);
 
 async function get(k) {
@@ -20,6 +21,7 @@ async function put(o) {
   try { await chrome.storage.local.set(o); return true; } catch (e) { return false; }
 }
 function render() {
+  if (locked) return;
   frame.srcdoc = current();
   $("reset").hidden = VIEW_ID ? true : !ok(local);
 }
@@ -33,6 +35,9 @@ async function loadViews() { const v = await get("views"); return Array.isArray(
     render();
     return;
   }
+  $("lock").hidden = false;
+  const pr = await get("syncPass");
+  if (pr && pr.hash) { locked = true; document.body.classList.add("locked"); $("lk-in").focus(); }
   const r = await get("syncHtmlV");
   if (ok(r)) remote = r;
   const l = await get("syncLocal");
@@ -90,6 +95,78 @@ function note(t) {
   b.textContent = t; b.hidden = false; m.textContent = $("ed").classList.contains("on") ? t : "";
   clearTimeout(toast); toast = setTimeout(() => { b.hidden = true; if (m.textContent === t) m.textContent = ""; }, 2500);
 }
+/* ---------- Password Aistim.sync (hanya hash PBKDF2-SHA256 + salt yang disimpan, bukan passwordnya) ---------- */
+const PW_ITER = 200000;
+const hx = (u) => Array.from(new Uint8Array(u), (b) => b.toString(16).padStart(2, "0")).join("");
+async function hashPw(pw, saltHex, iter) {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+  const salt = Uint8Array.from(saltHex.match(/../g).map((h) => parseInt(h, 16)));
+  return hx(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: iter }, key, 256));
+}
+async function cekPw(pw, rec) {
+  if (!rec || typeof rec.hash !== "string" || typeof rec.salt !== "string") return false;
+  const h = await hashPw(pw, rec.salt, rec.iter);
+  let d = h.length ^ rec.hash.length;
+  for (let i = 0; i < h.length; i++) d |= h.charCodeAt(i) ^ rec.hash.charCodeAt(i);
+  return d === 0;
+}
+let gagalPw = 0;
+async function bukaKunci() {
+  const pw = $("lk-in").value;
+  if (!pw) return;
+  $("lk-ok").disabled = true;
+  if (gagalPw) await new Promise((r) => setTimeout(r, Math.min(gagalPw, 5) * 1000)); // jeda makin lama setelah salah
+  const benar = await cekPw(pw, await get("syncPass"));
+  $("lk-ok").disabled = false;
+  if (!benar) { gagalPw++; $("lk-msg").textContent = "Password salah."; $("lk-in").select(); return; }
+  gagalPw = 0;
+  $("lk-in").value = "";
+  $("lk-msg").textContent = "";
+  locked = false;
+  document.body.classList.remove("locked");
+  render();
+}
+$("lk-ok").addEventListener("click", bukaKunci);
+$("lk-in").addEventListener("keydown", (e) => { if (e.key === "Enter") bukaKunci(); });
+
+let punyaPw = false;
+async function bukaPw(e) {
+  e.preventDefault();
+  const rec = await get("syncPass");
+  punyaPw = !!(rec && rec.hash);
+  for (const id of ["pw-old", "pw-new", "pw-new2"]) $(id).value = "";
+  $("pw-old").hidden = !punyaPw;
+  $("pw-del").hidden = !punyaPw;
+  $("pw-t").textContent = punyaPw ? "Ubah password Aistim.sync" : "Buat password Aistim.sync";
+  $("pw-msg").textContent = "";
+  $("pw").classList.add("on");
+  (punyaPw ? $("pw-old") : $("pw-new")).focus();
+}
+$("lock").addEventListener("click", bukaPw);
+$("pw-cancel").addEventListener("click", () => $("pw").classList.remove("on"));
+async function pwLama() {
+  if (!punyaPw) return true;
+  if (await cekPw($("pw-old").value, await get("syncPass"))) return true;
+  $("pw-msg").textContent = "Password saat ini salah.";
+  return false;
+}
+$("pw-save").addEventListener("click", async () => {
+  if (!(await pwLama())) return;
+  const a = $("pw-new").value;
+  if (a.length < 4 || a.length > 200) { $("pw-msg").textContent = "Password minimal 4 karakter."; return; }
+  if (a !== $("pw-new2").value) { $("pw-msg").textContent = "Pengulangan tidak sama."; return; }
+  const salt = hx(crypto.getRandomValues(new Uint8Array(16)));
+  const hash = await hashPw(a, salt, PW_ITER);
+  if (!(await put({ syncPass: { v: 1, salt, iter: PW_ITER, hash } }))) { $("pw-msg").textContent = "Gagal menyimpan."; return; }
+  $("pw").classList.remove("on");
+  note("Password disimpan");
+});
+$("pw-del").addEventListener("click", async () => {
+  if (!(await pwLama())) return;
+  try { await chrome.storage.local.remove("syncPass"); } catch (e) { $("pw-msg").textContent = "Gagal menghapus."; return; }
+  $("pw").classList.remove("on");
+  note("Password dihapus");
+});
 async function salin(text) {
   try { await navigator.clipboard.writeText(text); note("Tersalin"); return; } catch (e) {}
   const t = document.createElement("textarea"); // cadangan bila clipboard API ditolak
