@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const require = createRequire(import.meta.url);
-const S = require(path.join(root, "extension/menu/lib/secp256k1.js"));
+const S = require(path.join(root, "extension/sdk/secp256k1.js"));
 const src = fs.readFileSync(path.join(root, "extension/menu/verify.js"), "utf8");
 const PUB = (src.match(/const PUB = "([0-9a-f]{66})"/) || [])[1];
 const enc = new TextEncoder();

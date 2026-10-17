@@ -18,8 +18,9 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 
 - `extension/` — halaman utama (Board): `newtab.html`, `script.js`, `style.css`
 - `extension/menu/` — halaman tampilan lain: `icu.html` (Aistim), `sync.html` (Aistim.sync dan tampilan buatan sendiri), beserta `app.js`, `sync.js`, `tailwind.css`, `vendor/`
+- `extension/sdk/` — library dari SDK Aistim (minify, tanpa jaringan/eval): `secp256k1.js` (tanda tangan dan kunci, dipakai `menu/verify.js`), `hkdf.js`, `keccak.js`, `base64.js` (disiapkan, belum dipakai halaman mana pun)
 - `data/` — isi yang bisa diedit tanpa pasang ulang
-- `tools/` — pembuat CSS
+- `tools/` — pembuat CSS (`build.sh`), paket Web Store (`build-store.py`), penanda tangan data (`sign.mjs`)
 
 ## Private key admin
 
@@ -44,7 +45,7 @@ Ikon awan-panah di footer Aistim.sync menyimpan HTML ke `data/sync.html` di repo
 
 ## Verifikasi data dari GitHub
 
-Data yang diambil dari GitHub (`data/tiles.json`, `data/sync.html`) hanya dipakai bila ada berkas tanda tangan `<nama>.sig` yang cocok dengan public key admin (tertanam di `extension/menu/verify.js`, sama dengan admin di `akun.json` repo Auth). Tanda tangan ECDSA secp256k1 memakai library `extension/menu/lib/secp256k1.js` dari SDK Aistim. Ini hanya memeriksa data; tidak ada kode yang diunduh atau dijalankan. Data yang tidak ada tanda tangannya, tidak cocok, atau diubah diabaikan, dan extension memakai salinan terverifikasi terakhir atau data bawaan.
+Data yang diambil dari GitHub (`data/tiles.json`, `data/sync.html`) hanya dipakai bila ada berkas tanda tangan `<nama>.sig` yang cocok dengan public key admin (tertanam di `extension/menu/verify.js`, sama dengan admin di `akun.json` repo Auth). Tanda tangan ECDSA secp256k1 memakai library `extension/sdk/secp256k1.js` dari SDK Aistim. Ini hanya memeriksa data; tidak ada kode yang diunduh atau dijalankan. Data yang tidak ada tanda tangannya, tidak cocok, atau diubah diabaikan, dan extension memakai salinan terverifikasi terakhir atau data bawaan.
 
 Menandatangani (di komputer sendiri, private key jangan masuk repo):
 
