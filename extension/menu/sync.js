@@ -220,14 +220,6 @@ async function bukaPw(e) {
 }
 $("lock").addEventListener("click", bukaPw);
 $("pw-cancel").addEventListener("click", () => { $("pw").classList.remove("on"); for (const id of ["pw-old", "pw-new", "pw-new2"]) $(id).type = "password"; });
-// password acak dari SDK (Secp256k1.utils.randomBytes): 24 karakter hex, ditampilkan agar bisa dicatat
-$("pw-gen").addEventListener("click", async () => {
-  const pw = Secp256k1.utils.bytesToHex(Secp256k1.utils.randomBytes(12));
-  for (const id of ["pw-new", "pw-new2"]) { $(id).type = "text"; $(id).value = pw; }
-  let salin = false;
-  try { await navigator.clipboard.writeText(pw); salin = true; } catch (e) {}
-  $("pw-msg").textContent = "Catat password ini" + (salin ? " (sudah disalin)" : "") + ", lalu Simpan.";
-});
 async function pwLama() {
   if (!punyaPw) return true;
   if (await cekPw($("pw-old").value, await get("syncPass"))) return true;
