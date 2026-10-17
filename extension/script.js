@@ -141,16 +141,40 @@ function applyGradient() {
   b.background = `linear-gradient(135deg, ${a}, ${c})`;
   b.backgroundAttachment = "fixed";
 }
+function fotoStatus(teks, ms) {
+  let el = document.getElementById("foto-status");
+  if (!teks) { if (el) el.remove(); return; }
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "foto-status";
+    el.style.cssText = "position:fixed;left:12px;bottom:12px;padding:6px 10px;border-radius:999px;background:#000a;color:#fff;font:12px system-ui;z-index:50;max-width:calc(100% - 24px)";
+    document.body.append(el);
+  }
+  el.textContent = teks;
+  clearTimeout(fotoStatus.t);
+  if (ms) fotoStatus.t = setTimeout(() => el.remove(), ms);
+}
 function applyBackground() {
   const b = document.body.style;
+  fotoStatus("");
   if (settings.latar === "online") {
     applyGradient(); // sementara dan cadangan bila offline
     const url = fotoUrl();
     const img = new Image();
+    let selesai = false;
+    const lambat = setTimeout(() => { if (!selesai) fotoStatus("Foto online lambat dimuat, masih menunggu…"); }, 4000);
     img.onload = () => {
+      selesai = true;
+      clearTimeout(lambat);
+      fotoStatus("");
       if (settings.latar !== "online") return;
       b.background = `linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), center / cover no-repeat url("${url}")`;
       b.backgroundAttachment = "fixed";
+    };
+    img.onerror = () => {
+      selesai = true;
+      clearTimeout(lambat);
+      fotoStatus("Foto online gagal dimuat (offline atau diblokir). Memakai gradien.", 8000);
     };
     img.src = url;
     return;
