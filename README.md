@@ -59,6 +59,8 @@ Commit dan push berkas `*.sig` bersama datanya. Di versi lengkap, upload dari Ai
 
 Ikon gembok di Aistim.sync membuat, mengubah, atau menghapus password; tombol "Buat otomatis" membuat password acak 24 karakter (dari `Secp256k1.utils.randomBytes` SDK). Yang disimpan hanya hash (PBKDF2-SHA256, 200.000 putaran, salt acak 16 byte, lalu HKDF dari SDK `secp256k1.js`) di `chrome.storage.local` (`syncPass`), bukan passwordnya. Saat password aktif, Aistim.sync meminta password dulu: isi HTML tidak dimuat, ikon edit/salin/unduh disembunyikan, editor Aistim.sync di Pengaturan menolak membuka, dan salah memasukkan membuat jeda makin lama. Ikon profil (pojok kanan atas, tersembunyi saat terkunci) menampilkan **hash** password, **addr**, dan **pub**. Pasangan kunci secp256k1 diturunkan dari password (`HKDF(PBKDF2(password))`, info `aistim-sync-key`) dengan SDK; private key tidak disimpan, pub (terkompresi) dan addr (`0x` + 20 byte terakhir keccak256 pub tak terkompresi, sama seperti `akun.json` di Auth) disimpan di `syncPass`. Ketuk nilai untuk menyalin.
 
+Lupa password: di layar kunci ketuk "Lupa password?" lalu "Reset dan hapus". Itu menghapus password dan hasil edit lokal Aistim.sync (data di GitHub tidak terpengaruh); isi lokal tidak pernah bisa dibaca tanpa password.
+
 Ini penguncian tampilan di perangkat itu saja; HTML-nya sendiri tidak dienkripsi, jadi tidak melindungi dari orang yang bisa membuka profil browser.
 
 ## Tampilan buatan sendiri

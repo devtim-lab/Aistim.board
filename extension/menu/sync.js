@@ -147,6 +147,21 @@ async function bukaKunci() {
   render();
 }
 $("lk-ok").addEventListener("click", bukaKunci);
+// lupa password: hapus password dan hasil edit lokal (isi lokal tidak pernah terbaca tanpa password)
+$("lk-lupa").addEventListener("click", () => { $("lk-reset").hidden = false; });
+$("lk-reset-no").addEventListener("click", () => { $("lk-reset").hidden = true; });
+$("lk-reset-ok").addEventListener("click", async () => {
+  try { await chrome.storage.local.remove(["syncPass", "syncLocal"]); } catch (e) { $("lk-msg").textContent = "Gagal mereset."; return; }
+  local = null;
+  gagalPw = 0;
+  locked = false;
+  $("lk-reset").hidden = true;
+  $("lk-in").value = "";
+  $("lk-msg").textContent = "";
+  document.body.classList.remove("locked");
+  render();
+  note("Password dan edit lokal dihapus");
+});
 $("lk-in").addEventListener("keydown", (e) => { if (e.key === "Enter") bukaKunci(); });
 
 let punyaPw = false;
