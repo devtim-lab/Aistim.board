@@ -21,7 +21,7 @@ async function get(k) {
 async function put(o) {
   try { await chrome.storage.local.set(o); return true; } catch (e) { return false; }
 }
-// mode lihat: password ada tetapi belum login. Hanya salinan GitHub yang tampil; edit, salin, unduh, impor, upload tersembunyi
+// mode lihat: password ada tetapi belum login. Hanya salinan GitHub yang tampil; alat edit tersembunyi
 function setKunci(v) {
   locked = v;
   document.body.classList.toggle("locked", v);
@@ -531,26 +531,7 @@ async function salin(text) {
   let okc = false; try { okc = document.execCommand("copy"); } catch (e) {}
   t.remove(); note(okc ? "Tersalin" : "Gagal menyalin");
 }
-$("cp").addEventListener("click", (e) => { e.preventDefault(); salin(current()); });
 $("copy2").addEventListener("click", () => salin($("ta").value));
-$("dl").addEventListener("click", (e) => {
-  e.preventDefault();
-  const url = URL.createObjectURL(new Blob([current()], { type: "text/html" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "sync.html";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-});
-$("imp").addEventListener("click", (e) => { e.preventDefault(); $("file").click(); });
-$("file").addEventListener("change", async (e) => {
-  const f = e.target.files[0];
-  e.target.value = "";
-  if (!f || f.size > 500000) return;
-  const v = await f.text();
-  if (!ok(v)) return;
-  if (await simpan(v)) render();
-});
 
 $("back").addEventListener("click", async (e) => {
   e.preventDefault();

@@ -41,7 +41,7 @@ Pengaturan → Latar: berganti tiap hari (gradien), pilih warna, gambar sendiri 
 
 Pilihan Tampilan ketiga. Isinya HTML dari `data/sync.html` di repo ini (sekarang "Hallo"). Edit berkas itu lalu push ke `main`; extension mengambilnya saat online dan menyimpannya untuk offline, tanpa pasang ulang. HTML dan CSS berjalan, skrip tidak (iframe sandbox).
 
-Di halaman Aistim.sync (footer): **Edit** (editor langsung, tersimpan di perangkat dan diutamakan atas versi GitHub), **Salin** (ke clipboard), **Unduh** (simpan jadi `sync.html`), **Impor file** (pakai berkas HTML dari perangkat), **Kembalikan dari GitHub** (hapus salinan lokal).
+Di halaman Aistim.sync (footer): **Edit** (editor langsung, tersimpan di perangkat dan diutamakan atas versi GitHub), **Kembalikan dari GitHub** (hapus salinan lokal).
 
 ### Upload ke GitHub (Aistim.sync)
 
