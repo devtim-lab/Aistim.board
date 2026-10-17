@@ -42,7 +42,7 @@ function status(t, err) {
   el.style.color = err ? "#fca5a5" : "";
 }
 
-const DEFAULT_SETTINGS = { nama: "", jam24: true, latar: "harian", warna: 0, gambar: "", tampilan: "board" };
+const DEFAULT_SETTINGS = { nama: "", jam24: true, latar: "harian", warna: 0, gambar: "", foto: "hari", tampilan: "board" };
 
 // Tampilan Start dimuat di iframe agar alamat tab tetap newtab.html (kolom alamat Chrome tetap kosong)
 window.addEventListener("message", (e) => {
@@ -123,8 +123,38 @@ function initQuote() {
   $("quote-author").textContent = q.author;
 }
 
+const SEED_TAB = Math.random().toString(36).slice(2, 10); // tetap selama satu kali buka tab
+function fotoUrl() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  const hari = d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
+  const seed = settings.foto === "tab" ? SEED_TAB : settings.foto === "jam" ? hari + "h" + p(d.getHours()) : hari;
+  const r = window.devicePixelRatio || 1;
+  const w = Math.min(2560, Math.max(640, Math.round((screen.width * r) / 160) * 160));
+  const h = Math.min(1600, Math.max(480, Math.round((screen.height * r) / 160) * 160));
+  return "https://picsum.photos/seed/" + seed + "/" + w + "/" + h;
+}
+function applyGradient() {
+  const b = document.body.style;
+  const idx = settings.latar === "warna" ? settings.warna : dayIndex();
+  const [a, c] = GRADIENTS[((idx % GRADIENTS.length) + GRADIENTS.length) % GRADIENTS.length].warna;
+  b.background = `linear-gradient(135deg, ${a}, ${c})`;
+  b.backgroundAttachment = "fixed";
+}
 function applyBackground() {
   const b = document.body.style;
+  if (settings.latar === "online") {
+    applyGradient(); // sementara dan cadangan bila offline
+    const url = fotoUrl();
+    const img = new Image();
+    img.onload = () => {
+      if (settings.latar !== "online") return;
+      b.background = `linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), center / cover no-repeat url("${url}")`;
+      b.backgroundAttachment = "fixed";
+    };
+    img.src = url;
+    return;
+  }
   if (settings.latar === "gambar" && settings.gambar) {
     b.background = `center / cover no-repeat url("${settings.gambar}")`;
     b.backgroundAttachment = "fixed";
@@ -292,6 +322,7 @@ function syncRows() {
   const mode = $("set-bg").value;
   $("row-warna").hidden = mode !== "warna";
   $("row-gambar").hidden = mode !== "gambar";
+  $("row-online").hidden = mode !== "online";
 }
 
 function resizeImage(file, maxSide = 1920) {
@@ -512,6 +543,7 @@ $("btn-settings").addEventListener("click", () => {
   $("set-24h").checked = !!settings.jam24;
   $("set-bg").value = settings.latar;
   $("set-grad").value = String(settings.warna);
+  $("set-foto").value = ["tab", "jam", "hari"].includes(settings.foto) ? settings.foto : "hari";
   $("set-img").value = "";
   $("img-info").textContent = settings.gambar ? "Gambar tersimpan. Pilih berkas baru untuk menggantinya." : "Belum ada gambar.";
   syncRows();
@@ -541,6 +573,7 @@ $("form-settings").addEventListener("submit", async () => {
     latar: latar === "gambar" && !gambar ? "harian" : latar, // tanpa gambar tersimpan, kembali ke latar harian
     warna: Number($("set-grad").value) || 0,
     gambar,
+    foto: $("set-foto").value,
     tampilan: $("set-view").value,
   };
   try {

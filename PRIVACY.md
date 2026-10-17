@@ -1,6 +1,6 @@
 # Kebijakan Privasi Aistim Board
 
-Terakhir diperbarui: 17 Oktober 2026
+Terakhir diperbarui: 17 Oktober 2026 (foto online opsional)
 
 Aistim Board adalah extension Chrome yang menggantikan halaman tab baru dengan dashboard (jam, tugas, tampilan Aistim, Aistim.sync, dan tampilan buatan sendiri).
 
@@ -24,6 +24,10 @@ Menghapus extension atau datanya dari pengaturan browser menghapus semuanya. Pas
 ## Koneksi jaringan
 
 Extension hanya mengambil dua berkas data publik beserta tanda tangannya dari `https://raw.githubusercontent.com/devtim-lab/Aistim.board/` (`data/tiles.json`, `data/sync.html`, dan berkas `.sig`-nya). Permintaan ini tidak membawa data pribadimu. Seperti permintaan web biasa, GitHub dapat mencatat alamat IP dan informasi browser sesuai kebijakan privasi GitHub. Data hanya dipakai bila tanda tangannya cocok dengan kunci publik yang tertanam di extension.
+
+### Foto online (opsional)
+
+Hanya bila kamu memilih latar "Foto online" di Pengaturan (tidak aktif secara bawaan), halaman tab baru memuat satu gambar dari `https://picsum.photos/` (foto Unsplash). Permintaan gambar itu memuat ukuran layar dan kode acak atau tanggal untuk memilih foto. Seperti permintaan web biasa, picsum.photos dapat mencatat alamat IP dan informasi browser sesuai kebijakan mereka. Extension tidak mengirim data pribadi apa pun ke sana. Saat offline atau gagal, dipakai gradien.
 
 ## Kode jarak jauh
 

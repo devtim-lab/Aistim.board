@@ -33,6 +33,10 @@ Ikon kunci di pojok kanan atas Board (di sebelah ⚙) menyimpan private key admi
 3. Klik **Load unpacked**, pilih folder `extension/`.
 4. Buka tab baru.
 
+## Latar Board
+
+Pengaturan → Latar: berganti tiap hari (gradien), pilih warna, gambar sendiri (lokal), atau **Foto online** (`picsum.photos`, foto Unsplash). Foto online bisa berganti tiap buka tab baru, tiap jam, atau tiap hari (seed tetap, jadi foto yang sama dalam periode itu). Gambar dimuat langsung sebagai latar (tanpa izin host tambahan) dengan lapisan gelap tipis agar teks terbaca; offline atau gagal memakai gradien. Dicatat di `PRIVACY.md`.
+
 ## Aistim.sync
 
 Pilihan Tampilan ketiga. Isinya HTML dari `data/sync.html` di repo ini (sekarang "Hallo"). Edit berkas itu lalu push ke `main`; extension mengambilnya saat online dan menyimpannya untuk offline, tanpa pasang ulang. HTML dan CSS berjalan, skrip tidak (iframe sandbox).

@@ -101,12 +101,24 @@
             <option value="harian">Berganti tiap hari</option>
             <option value="warna">Pilih warna</option>
             <option value="gambar">Gambar sendiri</option>
+            <option value="online">Foto online (picsum.photos)</option>
           </select>
         </label>
 
         <label id="row-warna" hidden>Warna
           <select id="set-grad"></select>
         </label>
+
+        <div id="row-online" hidden>
+          <label>Ganti foto
+            <select id="set-foto">
+              <option value="tab">Tiap buka tab baru</option>
+              <option value="jam">Tiap jam</option>
+              <option value="hari">Tiap hari</option>
+            </select>
+          </label>
+          <small>Foto acak dari picsum.photos (foto Unsplash). Butuh internet; saat offline atau gagal, dipakai gradien.</small>
+        </div>
 
         <div id="row-gambar" hidden>
           <input id="set-img" type="file" accept="image/*">
