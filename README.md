@@ -57,7 +57,7 @@ Commit dan push berkas `*.sig` bersama datanya. Di versi lengkap, upload dari Ai
 
 ## Password Aistim.sync
 
-Ikon gembok di Aistim.sync membuat, mengubah, atau menghapus password. Yang disimpan hanya hash (PBKDF2-SHA256, 200.000 putaran, salt acak 16 byte) di `chrome.storage.local` (`syncPass`), bukan passwordnya. Saat password aktif, Aistim.sync meminta password dulu: isi HTML tidak dimuat, ikon edit/salin/unduh disembunyikan, editor Aistim.sync di Pengaturan menolak membuka, dan salah memasukkan membuat jeda makin lama. Ini penguncian tampilan di perangkat itu saja; HTML-nya sendiri tidak dienkripsi, jadi tidak melindungi dari orang yang bisa membuka profil browser.
+Ikon gembok di Aistim.sync membuat, mengubah, atau menghapus password; tombol "Buat otomatis" membuat password acak 24 karakter (dari `Secp256k1.utils.randomBytes` SDK). Yang disimpan hanya hash (PBKDF2-SHA256, 200.000 putaran, salt acak 16 byte, lalu HKDF dari SDK `secp256k1.js`) di `chrome.storage.local` (`syncPass`), bukan passwordnya. Saat password aktif, Aistim.sync meminta password dulu: isi HTML tidak dimuat, ikon edit/salin/unduh disembunyikan, editor Aistim.sync di Pengaturan menolak membuka, dan salah memasukkan membuat jeda makin lama. Ini penguncian tampilan di perangkat itu saja; HTML-nya sendiri tidak dienkripsi, jadi tidak melindungi dari orang yang bisa membuka profil browser.
 
 ## Tampilan buatan sendiri
 
