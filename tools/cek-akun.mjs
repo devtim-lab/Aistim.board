@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Periksa data/akun.json: struktur, role, dan addr cocok dengan pub (keccak256). Juga memastikan salinan bawaan
-// extension/menu/akun.json sama persis. Pemakaian: node tools/cek-akun.mjs
+// Periksa extension/menu/akun.json (bawaan) dan data/akun.json: struktur, role, dan addr cocok dengan pub (keccak256).
+// Pemakaian: node tools/cek-akun.mjs
 import fs from "node:fs";
 import path from "node:path";
 import { createRequire } from "node:module";
@@ -10,10 +10,9 @@ const require = createRequire(import.meta.url);
 const S = require(path.join(root, "extension/sdk/secp256k1.js"));
 const K = require(path.join(root, "extension/sdk/keccak.js"));
 const gagal = (t) => { console.error("DITOLAK: " + t); process.exit(1); };
-const a = fs.readFileSync(path.join(root, "data/akun.json"), "utf8");
-const b = fs.readFileSync(path.join(root, "extension/menu/akun.json"), "utf8");
-if (a !== b) gagal("extension/menu/akun.json harus sama dengan data/akun.json");
-const j = JSON.parse(a);
+// salinan bawaan (akar kepercayaan) dan data/akun.json (diperbarui admin) diperiksa sama ketatnya; keduanya boleh berbeda
+function periksa(berkas) {
+const j = JSON.parse(fs.readFileSync(path.join(root, berkas), "utf8"));
 if (j.version !== 1 || !Array.isArray(j.akun) || !j.akun.length || j.akun.length > 200) gagal("struktur tidak valid");
 const nama = new Set(), pubs = new Set();
 for (const x of j.akun) {
@@ -29,4 +28,7 @@ for (const x of j.akun) {
   if (String(x.addr).toLowerCase() !== addr) gagal("addr tidak cocok dengan pub untuk " + n + " (seharusnya " + addr + ")");
 }
 if (!j.akun.some((x) => x.role === "admin")) gagal("harus ada minimal satu admin");
-console.log("OK " + j.akun.length + " akun");
+console.log("OK " + berkas + ": " + j.akun.length + " akun");
+}
+periksa("extension/menu/akun.json");
+if (fs.existsSync(path.join(root, "data/akun.json"))) periksa("data/akun.json");

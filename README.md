@@ -61,7 +61,12 @@ Commit dan push berkas `*.sig` bersama datanya. Di versi lengkap, upload dari Ai
 
 ## Daftar akun (akun.json)
 
-`data/akun.json` (publik) berisi akun: `nama`, `addr`, `pub`, `role`, `script`, dengan format yang sama seperti `akun.json` di repo Auth. Hanya data publik; jangan menaruh hash password, private key, atau token di sana. Salinan bawaan ada di `extension/menu/akun.json` (harus sama persis; diperiksa `tools/cek-akun.mjs`, yang juga dijalankan di workflow Release: struktur, role, dan `addr` harus cocok dengan keccak256 `pub`). Extension memakai daftar dari GitHub hanya bila `data/akun.json.sig` cocok dengan kunci admin (tandatangani dengan `tools/sign.mjs data/akun.json`). Panel profil Aistim.sync menampilkan "Akun terdaftar" bila addr dan pub profil ada di daftar.
+`data/akun.json` (publik) berisi akun: `nama`, `addr`, `pub`, `role` (`admin` atau `user`), `script`, `dibuat`, dengan format yang sama seperti `akun.json` di repo Auth. Hanya data publik; jangan menaruh hash password, private key, atau token di sana. Identitas = pasangan kunci yang diturunkan dari password Aistim.sync (lihat panel profil).
+
+- **Akar kepercayaan:** salinan bawaan `extension/menu/akun.json` (ikut terkemas di extension). `tools/cek-akun.mjs` memeriksa struktur, role, dan `addr` = keccak256(`pub`); dijalankan di workflow Release.
+- **Hanya admin yang bisa mengubah.** Di panel profil, tombol **Kelola akun** hanya muncul bila addr dan pub profil terdaftar sebagai `admin`. Admin bisa menambah, mengubah (nama, role, script), dan menghapus akun. Aturannya: minimal satu admin, nama dan pub unik, tidak bisa menghapus atau menurunkan akun sendiri. Menyimpan meminta password admin lagi untuk menandatangani daftar (tanda tangan 130 hex: r, s, recid; private key diturunkan dari password dan tidak disimpan).
+- **Pemberlakuan di perangkat lain:** simpan `akun.json` dan `akun.json.sig` ke `data/` (tombol salin; di versi lengkap ada **Unggah ke GitHub**). Extension hanya menerima daftar dari GitHub bila penandatangannya (dipulihkan dari tanda tangan) adalah admin di salinan bawaan atau di daftar terverifikasi saat ini. Admin baru yang ditambahkan lewat daftar baru dipercaya setelah extension menerima daftar yang menambahkannya; salinan bawaan baru di rilis berikutnya menjadi akar yang baru.
+- Pembatasan ini ditegakkan oleh tanda tangan, bukan hanya tampilan: orang lain tidak bisa membuat daftar yang diterima extension tanpa kunci admin.
 
 ## Password Aistim.sync
 

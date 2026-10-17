@@ -115,9 +115,12 @@ async function hashPw(pw, saltHex, iter, v) {
   return hx(bits);
 }
 // pasangan kunci dari password (secp256k1, SDK): private key = HKDF(PBKDF2(password)), tidak disimpan; pub dan addr (keccak256) disimpan
-async function profilDari(pw, saltHex, iter) {
+async function privDari(pw, saltHex, iter) {
   const bits = await pbkdf(pw, saltHex, iter);
-  const priv = hx(Secp256k1.utils.hkdf(bits, hexBytes(saltHex), new TextEncoder().encode("aistim-sync-key"), 32));
+  return hx(Secp256k1.utils.hkdf(bits, hexBytes(saltHex), new TextEncoder().encode("aistim-sync-key"), 32));
+}
+async function profilDari(pw, saltHex, iter) {
+  const priv = await privDari(pw, saltHex, iter);
   const pub = Secp256k1.getPublicKey(priv, true);
   const tak = Secp256k1.getPublicKey(priv, false); // 04 + x + y
   const addr = "0x" + hx(Keccak.keccak256(Secp256k1.utils.hexToBytes(tak.slice(2))).slice(-20));
@@ -163,7 +166,7 @@ function pasangMata(inp) {
   new MutationObserver(segarkan).observe(inp, { attributes: true, attributeFilter: ["type"] });
   segarkan();
 }
-for (const id of ["lk-in", "pw-old", "pw-new", "pw-new2"]) pasangMata($(id));
+for (const id of ["lk-in", "pw-old", "pw-new", "pw-new2", "ak-pass"]) pasangMata($(id));
 let gagalPw = 0;
 async function bukaKunci() {
   const pw = $("lk-in").value;
@@ -251,8 +254,8 @@ const alamatDari = (pub) => "0x" + hx(Keccak.keccak256(Secp256k1.utils.hexToByte
 function akunSah(j) {
   try {
     if (!j || j.version !== 1 || !Array.isArray(j.akun) || !j.akun.length || j.akun.length > 200) return false;
-    return j.akun.every((a) => a && typeof a.nama === "string" && a.nama.length > 0 && a.nama.length <= 40 &&
-      /^0[23][0-9a-f]{64}$/.test(a.pub) && (a.role === "admin" || a.role === "user") && String(a.addr).toLowerCase() === alamatDari(a.pub));
+    return j.akun.some((a) => a && a.role === "admin") && j.akun.every((a) => a && typeof a.nama === "string" && a.nama.length > 0 && a.nama.length <= 40 &&
+      /^0[23][0-9a-f]{64}$/.test(a.pub) && (a.role === "admin" || a.role === "user") && String(a.addr).toLowerCase() === alamatDari(a.pub) && Array.isArray(a.script));
   } catch (e) { return false; }
 }
 async function akunLokal() {
@@ -261,17 +264,31 @@ async function akunLokal() {
   try { const j = await (await fetch("akun.json")).json(); if (akunSah(j)) return j; } catch (e) {}
   return null;
 }
+async function akunBawaan() {
+  try { const j = await (await fetch("akun.json")).json(); if (akunSah(j)) return j; } catch (e) {}
+  return null;
+}
+const adminPub = (list) => new Set(list ? list.akun.filter((a) => a.role === "admin").map((a) => a.pub) : []);
+// daftar dari GitHub diterima hanya bila ditandatangani admin yang sudah dipercaya (admin di salinan bawaan atau di daftar terverifikasi saat ini)
 async function akunRemote() {
   try {
     const [r, sg] = await Promise.all([fetch(URL_AKUN, { cache: "no-cache" }), fetch(URL_AKUN + ".sig", { cache: "no-cache" })]);
     if (!r.ok || !sg.ok) return null;
     const buf = new Uint8Array(await r.arrayBuffer());
-    if (!AistimVerify.cek("akun.json", buf, await sg.text())) return null; // tanda tangan admin tidak cocok: abaikan
-    const j = JSON.parse(new TextDecoder().decode(buf));
+    const sig = (await sg.text()).trim().toLowerCase();
+    const penanda = AistimVerify.penanda("akun.json", buf, sig);
+    const boleh = new Set([...adminPub(await akunBawaan()), ...adminPub(await akunLokal())]);
+    if (!penanda || !boleh.has(penanda)) return null; // bukan ditandatangani admin: abaikan
+    const teks = new TextDecoder().decode(buf);
+    const j = JSON.parse(teks);
     if (!akunSah(j)) return null;
-    await put({ akunV: j });
+    await put({ akunV: j, akunTeks: teks, akunSig: sig });
     return j;
   } catch (e) { return null; }
+}
+function adalahAdmin(list, rec) {
+  const a = list && rec ? list.akun.find((x) => x.addr.toLowerCase() === String(rec.addr).toLowerCase() && x.pub === rec.pub) : null;
+  return !!(a && a.role === "admin");
 }
 function hasilAkun(list, rec) {
   if (!list) return "Daftar akun tidak tersedia";
@@ -280,9 +297,14 @@ function hasilAkun(list, rec) {
   return a.pub === rec.pub ? a.nama + " (" + a.role + ")" : "Alamat terdaftar tetapi pub tidak cocok";
 }
 async function tampilAkun(rec) {
-  $("pf-akun").textContent = hasilAkun(await akunLokal(), rec);
+  const l = await akunLokal();
+  $("pf-akun").textContent = hasilAkun(l, rec);
+  $("pf-kelola").hidden = !adalahAdmin(l, rec);
   const r = await akunRemote();
-  if (r && $("pf").classList.contains("on")) $("pf-akun").textContent = hasilAkun(r, rec);
+  if (r && $("pf").classList.contains("on")) {
+    $("pf-akun").textContent = hasilAkun(r, rec);
+    $("pf-kelola").hidden = !adalahAdmin(r, rec);
+  }
 }
 
 // ikon profil: hash password, addr, pub (diturunkan dari password lewat SDK)
@@ -294,6 +316,7 @@ $("prof").addEventListener("click", async (e) => {
     ? "Pasangan kunci secp256k1 diturunkan dari passwordmu (SDK). Private key tidak disimpan. Ketuk nilai untuk menyalin."
     : "Belum ada password. Buat password lewat ikon gembok; hash, addr, dan pub diturunkan dari password itu.";
   for (const id of ["pf-r1", "pf-r2", "pf-r3", "pf-r4"]) $(id).hidden = !ada;
+  $("pf-kelola").hidden = true;
   $("pf-out").hidden = !ada;
   if (ada) {
     $("pf-hash").textContent = rec.hash; $("pf-addr").textContent = rec.addr || "-"; $("pf-pub").textContent = rec.pub || "-";
@@ -312,6 +335,8 @@ $("pf-out").addEventListener("click", async () => {
   $("tk") && $("tk").classList.remove("on");
   $("pw").classList.remove("on");
   $("pf").classList.remove("on");
+  $("ak").classList.remove("on");
+  akDraft = null; akRec = null;
   document.body.classList.add("locked");
   $("lk-msg").textContent = "Kamu sudah keluar.";
   $("lk-in").focus();
@@ -321,6 +346,155 @@ for (const id of ["pf-hash", "pf-addr", "pf-pub"]) $(id).addEventListener("click
   if (!t || t === "-") return;
   await salin(t);
   $("pf-p").textContent = "Tersalin: " + t.slice(0, 12) + "…";
+});
+/* ---------- Kelola akun (khusus admin): tambah, ubah, hapus; disimpan dan ditandatangani dengan password admin ---------- */
+const IKON_UBAH = '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></svg>';
+const IKON_HAPUS = '<svg viewBox="0 0 24 24"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>';
+let akDraft = null, akRec = null, akUbah = -1, akHapus = -1, akKotor = false;
+const akMsg = (t) => { $("ak-msg").textContent = t || ""; };
+function akRender() {
+  const box = $("ak-list");
+  box.replaceChildren();
+  akDraft.forEach((a, i) => {
+    const it = document.createElement("div");
+    it.className = "it";
+    const t = document.createElement("div");
+    t.className = "t";
+    const b = document.createElement("b");
+    b.textContent = a.nama + " · " + a.role;
+    const sm = document.createElement("small");
+    sm.textContent = a.addr;
+    t.append(b, sm);
+    it.append(t);
+    const mk = (cls, judul, html, fn) => {
+      const x = document.createElement("button");
+      x.type = "button"; x.className = cls; x.title = judul; x.setAttribute("aria-label", judul); x.innerHTML = html;
+      x.addEventListener("click", fn);
+      return x;
+    };
+    if (akHapus === i) {
+      const y = document.createElement("button"); y.type = "button"; y.className = "danger"; y.textContent = "Hapus";
+      y.addEventListener("click", () => akHapusYa(i));
+      const n = document.createElement("button"); n.type = "button"; n.textContent = "Batal";
+      n.addEventListener("click", () => { akHapus = -1; akRender(); });
+      it.append(y, n);
+    } else {
+      it.append(mk("ico2", "Ubah", IKON_UBAH, () => akBukaForm(i)), mk("ico2", "Hapus", IKON_HAPUS, () => { akHapus = i; akRender(); }));
+    }
+    box.append(it);
+  });
+  $("ak-simpan").disabled = !akKotor;
+}
+function akCek(daftar) {
+  const adaAdmin = daftar.some((a) => a.role === "admin");
+  if (!adaAdmin) return "Harus ada minimal satu admin.";
+  if (!daftar.some((a) => a.addr.toLowerCase() === String(akRec.addr).toLowerCase() && a.role === "admin")) return "Kamu tidak bisa menghapus atau menurunkan akunmu sendiri.";
+  const nama = new Set(), pubs = new Set();
+  for (const a of daftar) {
+    if (nama.has(a.nama.toLowerCase())) return "Nama ganda: " + a.nama;
+    nama.add(a.nama.toLowerCase());
+    if (pubs.has(a.pub)) return "Pub ganda untuk " + a.nama;
+    pubs.add(a.pub);
+  }
+  return "";
+}
+function akHapusYa(i) {
+  const baru = akDraft.filter((_, k) => k !== i);
+  const err = akCek(baru);
+  akHapus = -1;
+  if (err) { akMsg(err); akRender(); return; }
+  akDraft = baru; akKotor = true; akMsg("Akun dihapus. Belum disimpan."); akRender();
+}
+function akBukaForm(i) {
+  akUbah = i;
+  const a = i >= 0 ? akDraft[i] : null;
+  $("ak-nama").value = a ? a.nama : "";
+  $("ak-pub").value = a ? a.pub : "";
+  $("ak-pub").readOnly = !!a; // pub tidak diubah; hapus lalu tambah ulang
+  $("ak-role").value = a ? a.role : "user";
+  $("ak-script").value = a ? a.script.join(", ") : "";
+  $("ak-form").hidden = false;
+  $("ak-sign").hidden = true;
+  $("ak-hasil").hidden = true;
+  akMsg("");
+  $("ak-nama").focus();
+}
+$("ak-tambah").addEventListener("click", () => akBukaForm(-1));
+$("ak-f-batal").addEventListener("click", () => { $("ak-form").hidden = true; akMsg(""); });
+$("ak-f-ok").addEventListener("click", () => {
+  const nama = $("ak-nama").value.trim();
+  const pub = $("ak-pub").value.trim().toLowerCase();
+  const role = $("ak-role").value;
+  const script = $("ak-script").value.split(",").map((x) => x.trim()).filter(Boolean);
+  if (!nama || nama.length > 40) return akMsg("Nama wajib diisi (maks. 40 karakter).");
+  if (!/^0[23][0-9a-f]{64}$/.test(pub)) return akMsg("Pub harus 66 karakter hex diawali 02 atau 03.");
+  if (script.some((x) => !/^[a-z0-9_-]+$/.test(x))) return akMsg("Nama script hanya huruf kecil, angka, - dan _.");
+  let addr;
+  try { addr = alamatDari(pub); } catch (e) { return akMsg("Pub bukan titik kurva yang sah."); }
+  const baru = akDraft.map((a) => ({ ...a }));
+  if (akUbah >= 0) Object.assign(baru[akUbah], { nama, role, script });
+  else baru.push({ nama, addr, pub, role, script, dibuat: new Date().toISOString() });
+  const err = akCek(baru);
+  if (err) return akMsg(err);
+  akDraft = baru; akKotor = true; $("ak-form").hidden = true; akMsg("Entri disimpan. Belum ditandatangani."); akRender();
+});
+$("ak-simpan").addEventListener("click", () => {
+  if (!akKotor) return;
+  $("ak-form").hidden = true;
+  $("ak-hasil").hidden = true;
+  $("ak-pass").value = "";
+  $("ak-pass").type = "password";
+  $("ak-sign").hidden = false;
+  akMsg("");
+  $("ak-pass").focus();
+});
+$("ak-s-batal").addEventListener("click", () => { $("ak-sign").hidden = true; akMsg(""); });
+let akGagal = 0;
+$("ak-s-ok").addEventListener("click", async () => {
+  const pw = $("ak-pass").value;
+  if (!pw) return;
+  $("ak-s-ok").disabled = true;
+  try {
+    if (akGagal) await new Promise((r) => setTimeout(r, Math.min(akGagal, 5) * 1000));
+    const sp = await get("syncPass");
+    if (!sp || !sp.hash || !(await cekPw(pw, sp))) { akGagal++; return akMsg("Password salah."); }
+    const priv = await privDari(pw, sp.salt, sp.iter);
+    if (Secp256k1.getPublicKey(priv, true) !== akRec.pub) { akGagal++; return akMsg("Password ini bukan milik akun admin yang sedang masuk."); }
+    const obj = { version: 1, akun: akDraft };
+    const err = akCek(akDraft) || (akunSah(obj) ? "" : "Daftar tidak valid.");
+    if (err) return akMsg(err);
+    const teks = JSON.stringify(obj, null, 2) + "\n";
+    const sig = AistimVerify.tanda130("akun.json", new TextEncoder().encode(teks), priv);
+    if (!(await put({ akunV: obj, akunTeks: teks, akunSig: sig }))) return akMsg("Gagal menyimpan.");
+    akGagal = 0; akKotor = false;
+    $("ak-sign").hidden = true; $("ak-hasil").hidden = false;
+    akMsg("Ditandatangani oleh " + akRec.addr.slice(0, 10) + "…");
+    akRender();
+    tampilAkun(await get("syncPass"));
+  } finally { $("ak-s-ok").disabled = false; $("ak-pass").value = ""; }
+});
+$("ak-copy-json").addEventListener("click", async () => { const t = await get("akunTeks"); if (t) { await salin(t); akMsg("akun.json tersalin"); } });
+$("ak-copy-sig").addEventListener("click", async () => { const t = await get("akunSig"); if (t) { await salin(t); akMsg("Tanda tangan tersalin"); } });
+$("ak-tutup").addEventListener("click", () => {
+  if (akKotor && !confirmTutup()) return;
+  $("ak").classList.remove("on");
+});
+let tutupSekali = false;
+function confirmTutup() { // perubahan belum disimpan: ketuk Tutup dua kali untuk membuang
+  if (tutupSekali) { tutupSekali = false; return true; }
+  tutupSekali = true; akMsg("Ada perubahan yang belum disimpan. Ketuk Tutup lagi untuk membuang.");
+  setTimeout(() => { tutupSekali = false; }, 4000);
+  return false;
+}
+$("pf-kelola").addEventListener("click", async () => {
+  const rec = await get("syncPass");
+  const list = await akunLokal();
+  if (!rec || !adalahAdmin(list, rec)) return; // hanya admin terdaftar
+  akRec = rec; akDraft = list.akun.map((a) => ({ ...a, script: [...a.script] })); akKotor = false; akHapus = -1; akUbah = -1;
+  $("ak-form").hidden = true; $("ak-sign").hidden = true; $("ak-hasil").hidden = true; akMsg("");
+  akRender();
+  $("pf").classList.remove("on");
+  $("ak").classList.add("on");
 });
 async function salin(text) {
   try { await navigator.clipboard.writeText(text); note("Tersalin"); return; } catch (e) {}
@@ -477,4 +651,34 @@ async function gagalGH(status) {
   else if (status === 404) note("Gagal: repo tidak ditemukan atau token tidak punya akses");
   else note("Gagal: GitHub membalas " + status);
 }
+// unggah daftar akun yang sudah ditandatangani (akun.json + akun.json.sig) ke repo
+async function kirimFile(path, isi, token, pesan) {
+  for (let coba = 0; coba < 2; coba++) {
+    const cur = await api(path, token, { q: "?ref=" + GH.branch });
+    let sha;
+    if (cur.status === 200) {
+      const j = await cur.json();
+      if ((j.content || "").replace(/\s/g, "") === b64(isi)) return "";
+      sha = j.sha;
+    } else if (cur.status !== 404) return "GitHub membalas " + cur.status;
+    const res = await api(path, token, { method: "PUT", q: "", body: JSON.stringify({ message: pesan, content: b64(isi), branch: GH.branch, ...(sha ? { sha } : {}) }) });
+    if (res.ok) return "";
+    if (res.status !== 409 && res.status !== 422) return "GitHub membalas " + res.status;
+  }
+  return "berkas berubah di GitHub, coba lagi";
+}
+$("ak-up").addEventListener("click", async () => {
+  const token = await get("ghToken");
+  if (!token) return $("ak-msg").textContent = "Simpan token GitHub dulu (ikon kunci di bar bawah).";
+  const teks = await get("akunTeks"), sig = await get("akunSig");
+  if (!teks || !sig) return $("ak-msg").textContent = "Belum ada daftar yang ditandatangani.";
+  $("ak-up").disabled = true;
+  $("ak-msg").textContent = "Mengunggah…";
+  try {
+    const e1 = await kirimFile("data/akun.json", teks, token, "akun.json: diperbarui dari Aistim.sync (admin)");
+    const e2 = e1 || (await kirimFile("data/akun.json.sig", sig + "\n", token, "akun.json.sig: tanda tangan admin"));
+    $("ak-msg").textContent = e1 || e2 ? "Gagal: " + (e1 || e2) : "Terunggah ke GitHub";
+  } catch (e) { $("ak-msg").textContent = "Gagal: tidak ada koneksi"; }
+  finally { $("ak-up").disabled = false; }
+});
 /*/PRO*/

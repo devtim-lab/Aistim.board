@@ -19,5 +19,19 @@
     const s = S.sign(pesan(nama, bytes), privHex);
     return S.signatureToCompact(s);
   }
-  globalThis.AistimVerify = { PUB, cek, tanda };
+  // tanda tangan 130 hex = r|s (64 byte) + recid (1 byte): penanda dapat dipulihkan dari tanda tangannya (dipakai akun.json)
+  function tanda130(nama, bytes, privHex) {
+    const s = S.sign(pesan(nama, bytes), privHex);
+    return S.signatureToCompact(s) + s.recovery.toString(16).padStart(2, "0");
+  }
+  function penanda(nama, bytes, sig) {
+    try {
+      sig = String(sig || "").trim().toLowerCase();
+      if (!S || !/^[0-9a-f]{130}$/.test(sig) || !(bytes instanceof Uint8Array)) return null;
+      const { r, s } = S.signatureFromCompact(sig.slice(0, 128));
+      const pub = S.recoverPublicKey({ r, s, recovery: parseInt(sig.slice(128), 16) }, pesan(nama, bytes), true);
+      return S.verify({ r, s }, pesan(nama, bytes), pub) ? pub : null;
+    } catch (e) { return null; }
+  }
+  globalThis.AistimVerify = { PUB, cek, tanda, tanda130, penanda };
 })();
