@@ -2,7 +2,7 @@
    Data (data/tiles.json, data/sync.html) hanya dipakai bila ada berkas <nama>.sig yang cocok dengan public key admin di bawah.
    Ini hanya memeriksa data, tidak ada kode yang diunduh atau dijalankan. Tanda tangan dibuat offline oleh admin (tools/sign.mjs). */
 (() => {
-  const PUB = "0280a1985a488e55a30e2847661e48af258cb687b72eb697d8abe76598c22acdf5"; // public key admin (sama dengan akun.json di Auth)
+  const PUB = "0395610392c156c3cd73dd6ae7eef136ad9fb384afb1df93802daa97609454818d"; // public key admin (sama dengan admin di akun.json)
   const S = globalThis.Secp256k1;
   const enc = new TextEncoder();
   const hex = (u) => Array.from(u, (b) => b.toString(16).padStart(2, "0")).join("");

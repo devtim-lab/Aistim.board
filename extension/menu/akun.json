@@ -3,8 +3,8 @@
   "akun": [
     {
       "nama": "Admin",
-      "addr": "0x36c988d628c2c8fc22e03dd50cb72424a23eef9d",
-      "pub": "02aeccc3dcbc2d7b97c9ffa46531e8c55cd119d11f4d7b5d02d3b4382c99c28ac2",
+      "addr": "0xd4ce359f37c402eeec7b1533ae24a6d618934dc1",
+      "pub": "0395610392c156c3cd73dd6ae7eef136ad9fb384afb1df93802daa97609454818d",
       "role": "admin",
       "script": [],
       "dibuat": "2026-10-17T00:00:00.000Z"
