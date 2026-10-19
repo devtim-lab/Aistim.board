@@ -25,12 +25,22 @@ print:'<path d="M7 9V4h10v5M7 17H4V9h16v8h-3M7 14h10v6H7z"/>',
 truck:'<path d="M2 6h11v11H2zM13 10h4l3 3v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
 fb:'<path d="M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z"/>'
 };
+// ikon merek buatan sendiri: lencana putih membulat dengan gambar berwarna merek (tanpa gambar dari luar)
+const B=(c,g)=>'<rect x="2" y="2" width="20" height="20" rx="6" fill="#fff" stroke="none"/><g stroke="'+c+'" stroke-width="2" fill="none">'+g+'</g>';
+Object.assign(I,{
+crm:B('#0097a7','<circle cx="10" cy="9.500" r="2.500"/><path d="M5.500 17.500c0-3 2-4.500 4.500-4.500s4.500 1.500 4.500 4.500zM15.500 12.300c2.300-.4 3.500 1 3.500 3.200"/>'),
+erzap:B('#1c7de0','<path d="M16 7H9v10h7M9 12h5.500"/>'),
+oto:B('#d9531e','<path d="M6 15v-3l1.500-3.500h9L18 12v3zM8 17.500V15M16 17.500V15M7 12h10"/>'),
+shopee:B('#ee4d2d','<path d="M6.500 9h11l-.8 9H7.300zM9.500 9V8a2.500 2.500 0 015 0v1"/>'),
+midtrans:B('#00518f','<path d="M6 17v-6a2 2 0 014 0v6M10 13a2 2 0 014 0v4M14 13a2 2 0 014 0v4"/>'),
+imin:B('#6a3fc4','<path d="M8.500 10V6h7v4M8.500 15H6.500v-5h11v5h-2M8.500 13h7v5h-7z"/>'),
+edbunt:B('#0f9d0f','<path d="M6 10l1-3.500h10L18 10M6 10a2 2 0 004 0 2 2 0 004 0 2 2 0 004 0M7 12.500V18h10v-5.500"/>'),
+logistik:B('#0f9aa3','<path d="M5.500 8h7v7h-7zM12.500 10.500h3l2 2.500v2h-5"/><circle cx="8.500" cy="16.500" r="1.300"/><circle cx="15" cy="16.500" r="1.300"/>'),
+fb:B('#1877f2','<path d="M13.500 18v-5h2l.4-2.500h-2.400V9c0-.8.4-1.300 1.400-1.300h1.100V5.600c-.4 0-1.200-.1-2-.1-2 0-3 1.200-3 3.100v1.900H9v2.500h2v5z"/>')
+});
 const G0=[
- [ {n:'CRM',i:'people',c:'#0097a7',w:2,fav:1,href:'https://crm.aistim.icu'}, {n:'Erzap Trial',i:'desk',c:'#1c7de0',w:2,fav:1,href:'https://trial.erzap.com'}, {n:'Ototech',i:'car',c:'#d9531e',w:2,fav:1,href:'https://ototech.erzap.com'}, {n:'Shopee',i:'bag',c:'#ee4d2d',w:2,fav:1,href:'https://subaccount.shopee.com/shops'}, {n:'Midtrans',i:'card',c:'#00518f',w:2,fav:1,href:'https://dashboard.midtrans.com/'}, {n:'imin',i:'print',c:'#6a3fc4',w:2,fav:1,href:'https://kit.imin.sg/user/login'}, {n:'Edbunt',i:'store',c:'#0f9d0f',w:2,fav:1,href:'https://edbunt.com/'}, {n:'Logistik',i:'truck',c:'#0f9aa3',w:2,fav:1,href:'https://logistik.aistim.icu/login'}, {n:'Facebook',i:'fb',c:'#1877f2',w:2,fav:1,href:'https://business.facebook.com/'} ]
+ [ {n:'CRM',i:'crm',c:'#0097a7',w:2,href:'https://crm.aistim.icu'}, {n:'Erzap Trial',i:'erzap',c:'#1c7de0',w:2,href:'https://trial.erzap.com'}, {n:'Ototech',i:'oto',c:'#d9531e',w:2,href:'https://ototech.erzap.com'}, {n:'Shopee',i:'shopee',c:'#ee4d2d',w:2,href:'https://subaccount.shopee.com/shops'}, {n:'Midtrans',i:'midtrans',c:'#00518f',w:2,href:'https://dashboard.midtrans.com/'}, {n:'imin',i:'imin',c:'#6a3fc4',w:2,href:'https://kit.imin.sg/user/login'}, {n:'Edbunt',i:'edbunt',c:'#0f9d0f',w:2,href:'https://edbunt.com/'}, {n:'Logistik',i:'logistik',c:'#0f9aa3',w:2,href:'https://logistik.aistim.icu/login'}, {n:'Facebook',i:'fb',c:'#1877f2',w:2,href:'https://business.facebook.com/'} ]
 ];
-// favicon situs tujuan: hanya domain tile itu sendiri yang dikirim ke layanan favicon Google; gagal = ikon bawaan tetap tampil
-const FAV='https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&size=64&url=';
-const favUrl=t=>{try{return t.fav&&/^https:\/\//.test(t.href||'')?FAV+encodeURIComponent(new URL(t.href).origin):''}catch(e){return ''}};
 const TILES_URL='https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/tiles.json';
 const SIG_URL=TILES_URL+'.sig';
 const KEY='aistim-chat';
@@ -75,10 +85,9 @@ document.addEventListener('alpine:init',()=>{
         let st='background:'+(t.img?t.img+','+t.c+';background-size:cover;background-position:center':t.c)+';';
         if(t.w)st+='grid-column:span '+t.w+';';
         if(t.h)st+='grid-row:span '+t.h+';';
-        return {n:t.n,href:t.href||'#',target:t.href?'_blank':'_self',style:st,showIcon:!!t.i&&!t.img,icon:t.i?I[t.i]:'',fav:favUrl(t)};
+        return {n:t.n,href:t.href||'#',target:t.href?'_blank':'_self',style:st,showIcon:!!t.i&&!t.img,icon:t.i?I[t.i]:''};
       })}));
     },
-    favLoaded(e){const im=e.target,sv=im.parentElement.querySelector('svg');im.style.display='';if(sv)sv.style.display='none'}, // favicon berhasil: tampilkan, sembunyikan ikon bawaan
     sync(){this.msgs=this.log.map(m=>({text:m.text,cls:m.me?'self-end bg-[#0097a7]':'bg-white/20',meta:(m.me?'Anda':'Aistim')+' · '+hm(m.t)}))},
     save(){try{localStorage.setItem(KEY,JSON.stringify(this.log.slice(-100)))}catch(e){}},
     scroll(){this.$nextTick(()=>{const m=this.$refs.msgs;if(m)m.scrollTop=m.scrollHeight})},

@@ -26,7 +26,6 @@
       <template x-for="t in g.tiles">
         <a class="relative block overflow-hidden text-white no-underline outline outline-2 -outline-offset-2 outline-transparent transition hover:outline-white/60 active:scale-95" :style="t.style" :href="t.href" :target="t.target" rel="noopener">
           <svg x-show="t.showIcon" viewBox="0 0 24 24" class="absolute left-1/2 top-[44%] w-[calc(var(--u)*.42)] -translate-x-1/2 -translate-y-1/2 fill-none stroke-white stroke-[2.2]" stroke-linecap="round" stroke-linejoin="round" x-html="t.icon"></svg>
-          <template x-if="t.fav"><img :src="t.fav" alt="" referrerpolicy="no-referrer" @load="favLoaded" style="display:none;position:absolute;left:50%;top:44%;width:calc(var(--u)*.42);height:calc(var(--u)*.42);transform:translate(-50%,-50%);box-sizing:border-box;padding:calc(var(--u)*.05);background:#fff;border-radius:22%;object-fit:contain"></template>
           <span class="absolute bottom-[5px] left-2 text-[max(10px,calc(var(--u)*.1))] [text-shadow:0_0_3px_#0004]" x-text="t.n"></span>
         </a>
       </template>
