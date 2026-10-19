@@ -26,12 +26,6 @@ truck:'<path d="M2 6h11v11H2zM13 10h4l3 3v4h-7"/><circle cx="7" cy="18" r="2"/><
 fb:'<path d="M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8z"/>'
 };
 const G0=[
- [ {n:'Mail',i:'mail',c:'#0097a7',w:2}, {n:'Kalender',i:'cal',c:'#6a3fc4',w:2}, {n:'Browser',i:'ie',c:'#1c7de0',href:'https://www.bing.com'}, {n:'Store',i:'store',c:'#0f9d0f'},
-   {n:'Kontak',i:'people',c:'#d9531e',w:2}, {n:'Foto',i:'photo',c:'#0f9aa3',w:2}, {n:'Peta',i:'map',c:'#8a1fa6'}, {n:'Cloud',i:'cloud',c:'#1b62c9'},
-   {n:'Pesan',i:'msg',c:'#a512a5',w:2}, {n:'Keuangan',i:'chart',c:'#0f9d0f',w:2}, {n:'Olahraga',i:'trophy',c:'#6a3fc4',w:2},
-   {n:'Desktop',i:'desk',c:'#3a8fd8',w:2,img:'linear-gradient(135deg,#6fb4ee,#e8f4ff 50%,#4a9be0)'}, {n:'Cuaca',i:'sun',c:'#2b8cf0',w:2}, {n:'Berita',i:'news',c:'#c2183e',w:2} ],
- [ {n:'Bing',c:'#9a7d2c',w:2,img:'linear-gradient(#b8c46a,#6f8b2f 55%,#d7a43a)',cls:'photo'}, {n:'Perjalanan',i:'bag',c:'#0f9aa3',w:2},
-   {n:'Game',i:'pad',c:'#0f9d0f'}, {n:'Kamera',i:'cam',c:'#a512a5'}, {n:'Musik',i:'head',c:'#d9531e'}, {n:'Video',i:'video',c:'#c2183e'} ],
  [ {n:'CRM',i:'people',c:'#0097a7',w:2,fav:1,href:'https://crm.aistim.icu'}, {n:'Erzap Trial',i:'desk',c:'#1c7de0',w:2,fav:1,href:'https://trial.erzap.com'}, {n:'Ototech',i:'car',c:'#d9531e',w:2,fav:1,href:'https://ototech.erzap.com'}, {n:'Shopee',i:'bag',c:'#ee4d2d',w:2,fav:1,href:'https://subaccount.shopee.com/shops'}, {n:'Midtrans',i:'card',c:'#00518f',w:2,fav:1,href:'https://dashboard.midtrans.com/'}, {n:'imin',i:'print',c:'#6a3fc4',w:2,fav:1,href:'https://kit.imin.sg/user/login'}, {n:'Edbunt',i:'store',c:'#0f9d0f',w:2,fav:1,href:'https://edbunt.com/'}, {n:'Logistik',i:'truck',c:'#0f9aa3',w:2,fav:1,href:'https://logistik.aistim.icu/login'}, {n:'Facebook',i:'fb',c:'#1877f2',w:2,fav:1,href:'https://business.facebook.com/'} ]
 ];
 // favicon situs tujuan: hanya domain tile itu sendiri yang dikirim ke layanan favicon Google; gagal = ikon bawaan tetap tampil
