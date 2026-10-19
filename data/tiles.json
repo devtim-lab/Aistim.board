@@ -117,5 +117,70 @@
    "i": "video",
    "c": "#c2183e"
   }
+ ],
+ [
+  {
+   "n": "CRM",
+   "i": "people",
+   "c": "#0097a7",
+   "w": 2,
+   "href": "https://crm.aistim.icu"
+  },
+  {
+   "n": "Erzap Trial",
+   "i": "desk",
+   "c": "#1c7de0",
+   "w": 2,
+   "href": "https://trial.erzap.com"
+  },
+  {
+   "n": "Ototech",
+   "i": "car",
+   "c": "#d9531e",
+   "w": 2,
+   "href": "https://ototech.erzap.com"
+  },
+  {
+   "n": "Shopee",
+   "i": "bag",
+   "c": "#ee4d2d",
+   "w": 2,
+   "href": "https://subaccount.shopee.com/shops"
+  },
+  {
+   "n": "Midtrans",
+   "i": "card",
+   "c": "#00518f",
+   "w": 2,
+   "href": "https://dashboard.midtrans.com/"
+  },
+  {
+   "n": "imin",
+   "i": "print",
+   "c": "#6a3fc4",
+   "w": 2,
+   "href": "https://kit.imin.sg/user/login"
+  },
+  {
+   "n": "Edbunt",
+   "i": "store",
+   "c": "#0f9d0f",
+   "w": 2,
+   "href": "https://edbunt.com/"
+  },
+  {
+   "n": "Logistik",
+   "i": "truck",
+   "c": "#0f9aa3",
+   "w": 2,
+   "href": "https://logistik.aistim.icu/login"
+  },
+  {
+   "n": "Facebook",
+   "i": "fb",
+   "c": "#1877f2",
+   "w": 2,
+   "href": "https://business.facebook.com/"
+  }
  ]
 ]
