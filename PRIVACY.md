@@ -1,6 +1,6 @@
 # Kebijakan Privasi Aistim Board
 
-Terakhir diperbarui: 17 Oktober 2026 (foto online opsional)
+Terakhir diperbarui: 19 Oktober 2026 (logo situs pada tombol link)
 
 Aistim Board adalah extension Chrome yang menggantikan halaman tab baru dengan dashboard (jam, tugas, tampilan Aistim, Aistim.sync, dan tampilan buatan sendiri).
 
@@ -28,6 +28,10 @@ Extension hanya mengambil dua berkas data publik beserta tanda tangannya dari `h
 ### Foto online (opsional)
 
 Hanya bila kamu memilih latar "Foto online" di Pengaturan (tidak aktif secara bawaan), halaman tab baru memuat satu gambar dari `https://picsum.photos/` (foto Unsplash). Permintaan gambar itu memuat ukuran layar dan kode acak atau tanggal untuk memilih foto. Seperti permintaan web biasa, picsum.photos dapat mencatat alamat IP dan informasi browser sesuai kebijakan mereka. Extension tidak mengirim data pribadi apa pun ke sana. Saat offline atau gagal, dipakai gradien.
+
+### Logo situs pada tombol link (favicon)
+
+Tombol link di tampilan Aistim (Start), seperti CRM, Shopee, dan Midtrans, menampilkan logo situs tujuannya. Logo diambil dari layanan favicon Google (`https://t0.gstatic.com/faviconV2`). Yang dikirim hanya alamat domain situs di tombol itu (misalnya `https://shopee.com`), tanpa path, tanpa data pribadi, dan tanpa referrer. Seperti permintaan web biasa, Google dapat mencatat alamat IP dan informasi browser sesuai kebijakan privasi Google. Hanya tombol yang diberi tanda favicon di `data/tiles.json` yang memakainya. Jika layanan tidak tersedia atau situs tidak punya logo, tombol memakai ikon bawaan.
 
 ## Kode jarak jauh
 

@@ -32,8 +32,11 @@ const G0=[
    {n:'Desktop',i:'desk',c:'#3a8fd8',w:2,img:'linear-gradient(135deg,#6fb4ee,#e8f4ff 50%,#4a9be0)'}, {n:'Cuaca',i:'sun',c:'#2b8cf0',w:2}, {n:'Berita',i:'news',c:'#c2183e',w:2} ],
  [ {n:'Bing',c:'#9a7d2c',w:2,img:'linear-gradient(#b8c46a,#6f8b2f 55%,#d7a43a)',cls:'photo'}, {n:'Perjalanan',i:'bag',c:'#0f9aa3',w:2},
    {n:'Game',i:'pad',c:'#0f9d0f'}, {n:'Kamera',i:'cam',c:'#a512a5'}, {n:'Musik',i:'head',c:'#d9531e'}, {n:'Video',i:'video',c:'#c2183e'} ],
- [ {n:'CRM',i:'people',c:'#0097a7',w:2,href:'https://crm.aistim.icu'}, {n:'Erzap Trial',i:'desk',c:'#1c7de0',w:2,href:'https://trial.erzap.com'}, {n:'Ototech',i:'car',c:'#d9531e',w:2,href:'https://ototech.erzap.com'}, {n:'Shopee',i:'bag',c:'#ee4d2d',w:2,href:'https://subaccount.shopee.com/shops'}, {n:'Midtrans',i:'card',c:'#00518f',w:2,href:'https://dashboard.midtrans.com/'}, {n:'imin',i:'print',c:'#6a3fc4',w:2,href:'https://kit.imin.sg/user/login'}, {n:'Edbunt',i:'store',c:'#0f9d0f',w:2,href:'https://edbunt.com/'}, {n:'Logistik',i:'truck',c:'#0f9aa3',w:2,href:'https://logistik.aistim.icu/login'}, {n:'Facebook',i:'fb',c:'#1877f2',w:2,href:'https://business.facebook.com/'} ]
+ [ {n:'CRM',i:'people',c:'#0097a7',w:2,fav:1,href:'https://crm.aistim.icu'}, {n:'Erzap Trial',i:'desk',c:'#1c7de0',w:2,fav:1,href:'https://trial.erzap.com'}, {n:'Ototech',i:'car',c:'#d9531e',w:2,fav:1,href:'https://ototech.erzap.com'}, {n:'Shopee',i:'bag',c:'#ee4d2d',w:2,fav:1,href:'https://subaccount.shopee.com/shops'}, {n:'Midtrans',i:'card',c:'#00518f',w:2,fav:1,href:'https://dashboard.midtrans.com/'}, {n:'imin',i:'print',c:'#6a3fc4',w:2,fav:1,href:'https://kit.imin.sg/user/login'}, {n:'Edbunt',i:'store',c:'#0f9d0f',w:2,fav:1,href:'https://edbunt.com/'}, {n:'Logistik',i:'truck',c:'#0f9aa3',w:2,fav:1,href:'https://logistik.aistim.icu/login'}, {n:'Facebook',i:'fb',c:'#1877f2',w:2,fav:1,href:'https://business.facebook.com/'} ]
 ];
+// favicon situs tujuan: hanya domain tile itu sendiri yang dikirim ke layanan favicon Google; gagal = ikon bawaan tetap tampil
+const FAV='https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&size=64&url=';
+const favUrl=t=>{try{return t.fav&&/^https:\/\//.test(t.href||'')?FAV+encodeURIComponent(new URL(t.href).origin):''}catch(e){return ''}};
 const TILES_URL='https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/tiles.json';
 const SIG_URL=TILES_URL+'.sig';
 const KEY='aistim-chat';
@@ -78,9 +81,10 @@ document.addEventListener('alpine:init',()=>{
         let st='background:'+(t.img?t.img+','+t.c+';background-size:cover;background-position:center':t.c)+';';
         if(t.w)st+='grid-column:span '+t.w+';';
         if(t.h)st+='grid-row:span '+t.h+';';
-        return {n:t.n,href:t.href||'#',target:t.href?'_blank':'_self',style:st,showIcon:!!t.i&&!t.img,icon:t.i?I[t.i]:''};
+        return {n:t.n,href:t.href||'#',target:t.href?'_blank':'_self',style:st,showIcon:!!t.i&&!t.img,icon:t.i?I[t.i]:'',fav:favUrl(t)};
       })}));
     },
+    favLoaded(e){const im=e.target,sv=im.parentElement.querySelector('svg');im.style.display='';if(sv)sv.style.display='none'}, // favicon berhasil: tampilkan, sembunyikan ikon bawaan
     sync(){this.msgs=this.log.map(m=>({text:m.text,cls:m.me?'self-end bg-[#0097a7]':'bg-white/20',meta:(m.me?'Anda':'Aistim')+' · '+hm(m.t)}))},
     save(){try{localStorage.setItem(KEY,JSON.stringify(this.log.slice(-100)))}catch(e){}},
     scroll(){this.$nextTick(()=>{const m=this.$refs.msgs;if(m)m.scrollTop=m.scrollHeight})},

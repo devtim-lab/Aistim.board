@@ -11,6 +11,7 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 - Daftar tugas: tambah, centang, ubah (klik ✎ atau klik ganda), hapus, hapus yang selesai
 - Ekspor / impor tugas (JSON), impor melewati duplikat
 - Tampilan **Start (Aistim.icu)** bergaya Windows 8, tersimpan di dalam extension sehingga jalan tanpa internet; pilih di Pengaturan → Tampilan ("Aistim"), kembali lewat tautan di footer
+- Tile dengan `"fav": 1` dan `href` https menampilkan favicon situsnya (layanan favicon Google; hanya domain yang dikirim, gagal = ikon bawaan). Lihat PRIVACY.md.
 - Tile tampilan Start bisa diubah tanpa rilis: edit `data/tiles.json` lalu push ke `main`; extension mengambilnya dari GitHub saat online dan menyimpannya untuk offline
 - Pengaturan lewat tombol ⚙ di kanan atas; semua data tersimpan di `chrome.storage.local`
 
