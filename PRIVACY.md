@@ -1,8 +1,8 @@
 # Kebijakan Privasi Aistim Board
 
-Terakhir diperbarui: 19 Oktober 2026
+Terakhir diperbarui: 21 Oktober 2026
 
-Aistim Board adalah extension Chrome yang menggantikan halaman tab baru dengan dashboard (jam, tugas, tampilan Aistim, Aistim.sync, dan tampilan buatan sendiri).
+Aistim Board adalah extension Chrome yang menggantikan halaman tab baru dengan dashboard (jam, menu pintasan, tampilan Aistim, Aistim.sync, dan tampilan buatan sendiri).
 
 ## Data yang dikumpulkan
 
@@ -13,7 +13,8 @@ Aistim Board **tidak mengumpulkan, mengirim, menjual, atau membagikan data priba
 Semua berikut hanya tersimpan di browser ini (`chrome.storage.local` dan `localStorage`) dan tidak pernah dikirim ke mana pun:
 
 - pengaturan (nama sapaan, format jam, latar);
-- daftar tugas;
+- menu pintasan di Board (nama, link, dan ikon yang kamu isi sendiri; ikon gambar disimpan sebagai data kecil di browser, tidak diunduh dari internet);
+- daftar tugas dari versi lama, bila ada (sudah tidak ditampilkan);
 - HTML tampilan Aistim.sync dan tampilan buatan sendiri yang kamu tulis atau impor;
 - riwayat chat di tampilan Aistim (balasan dibuat lokal);
 - hash password Aistim.sync bila kamu membuatnya (PBKDF2-SHA256 dengan salt; passwordnya sendiri tidak disimpan);

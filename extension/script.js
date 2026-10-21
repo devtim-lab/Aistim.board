@@ -89,7 +89,6 @@ const store = {
 };
 
 let settings = { ...DEFAULT_SETTINGS };
-let todos = [];
 
 // ---------- Jam, tanggal, sapaan ----------
 function greetingFor(hour) {
@@ -190,145 +189,207 @@ function applyBackground() {
   b.backgroundAttachment = "fixed";
 }
 
-// ---------- Todo ----------
+// ---------- Menu (pintasan di Board) ----------
+const MAX_PIN = 24;
+let pins = []; // [{ id, nama, href, ikon, gambar }]
+let pinAtur = false; // mode atur: ketuk menu untuk mengubah atau menghapus
+let pinTarget = null; // id yang sedang diubah di dialog; null = menu baru
+let pinGambar = ""; // data URL gambar ikon yang dipilih di dialog
+
 function msg(text) {
-  const el = $("todo-msg");
+  const el = $("board-msg");
   el.textContent = text;
   clearTimeout(msg.t);
   if (text) msg.t = setTimeout(() => (el.textContent = ""), 4000);
 }
 
-async function saveTodos() {
-  await store.set("todos", todos);
-}
-
-function startEdit(li, i) {
-  const span = li.querySelector("span");
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "edit";
-  input.value = todos[i].text;
-  input.maxLength = 300;
-  span.replaceWith(input);
-  input.focus();
-  input.select();
-
-  let selesai = false;
-  const finish = async (simpan) => {
-    if (selesai) return;
-    selesai = true;
-    const v = input.value.trim();
-    if (simpan && v && v !== todos[i].text) {
-      todos[i].text = v;
-      await saveTodos();
-    }
-    render();
-  };
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") finish(true);
-    else if (e.key === "Escape") finish(false);
-  });
-  input.addEventListener("blur", () => finish(true));
-}
-
-function render() {
-  const list = $("todo-list");
-  list.textContent = "";
-  todos.forEach((t, i) => {
-    const li = document.createElement("li");
-    if (t.done) li.className = "done";
-
-    const check = document.createElement("input");
-    check.type = "checkbox";
-    check.checked = t.done;
-    check.addEventListener("change", async () => {
-      todos[i].done = check.checked;
-      await saveTodos();
-      render();
-    });
-
-    const text = document.createElement("span");
-    text.textContent = t.text;
-    text.addEventListener("dblclick", () => startEdit(li, i));
-
-    const edit = document.createElement("button");
-    edit.textContent = "✎";
-    edit.title = "Ubah";
-    edit.addEventListener("click", () => startEdit(li, i));
-
-    const del = document.createElement("button");
-    del.textContent = "×";
-    del.title = "Hapus";
-    del.addEventListener("click", async () => {
-      todos.splice(i, 1);
-      await saveTodos();
-      render();
-    });
-
-    li.append(check, text, edit, del);
-    list.append(li);
-  });
-}
-
-$("todo-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const input = $("todo-input");
-  const text = input.value.trim();
-  if (!text) return;
-  todos.push({ text, done: false });
-  input.value = "";
-  await saveTodos();
-  render();
-});
-
-$("btn-clear-done").addEventListener("click", async () => {
-  const sisa = todos.filter((t) => !t.done);
-  const n = todos.length - sisa.length;
-  if (!n) return msg("Belum ada tugas yang selesai.");
-  todos = sisa;
-  await saveTodos();
-  render();
-  msg(n + " tugas selesai dihapus.");
-});
-
-// ---------- Ekspor / impor ----------
-$("btn-export").addEventListener("click", () => {
-  const data = { app: "aistim-board", versi: 1, diekspor: new Date().toISOString(), todos };
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "aistim-board-tugas.json";
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-  msg("Diekspor: " + todos.length + " tugas.");
-});
-
-$("btn-import").addEventListener("click", () => $("file-import").click());
-
-$("file-import").addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  e.target.value = "";
-  if (!file) return;
-  try {
-    if (file.size > 2 * 1024 * 1024) throw new Error("Berkas terlalu besar.");
-    const data = JSON.parse(await file.text());
-    const arr = Array.isArray(data) ? data : data && data.todos;
-    if (!Array.isArray(arr)) throw new Error("Format tidak dikenali.");
-    const ada = new Set(todos.map((t) => t.text));
-    let tambah = 0;
-    arr.forEach((t) => {
-      const text = t && typeof t.text === "string" ? t.text.trim().slice(0, 300) : "";
-      if (!text || ada.has(text)) return;
-      ada.add(text);
-      todos.push({ text, done: !!t.done });
-      tambah++;
-    });
-    await saveTodos();
-    render();
-    msg("Diimpor: " + tambah + " tugas baru (duplikat dilewati).");
-  } catch (err) {
-    msg("Gagal impor: " + err.message);
+// Hanya http/https yang diterima; "contoh.com" otomatis jadi https://contoh.com/
+function normalUrl(v) {
+  v = (v || "").trim();
+  if (!v) return null;
+  if (!/^https?:\/\//i.test(v)) {
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(v)) return null; // skema lain (ftp://, file://, ...)
+    v = "https://" + v;
   }
+  try {
+    const u = new URL(v);
+    return (u.protocol === "http:" || u.protocol === "https:") && u.hostname ? u.href : null;
+  } catch (e) {
+    return null;
+  }
+}
+function hostOf(href) {
+  try { return new URL(href).hostname.replace(/^www\./, ""); } catch (e) { return ""; }
+}
+function grafem(s, n) {
+  s = (s || "").trim();
+  if (typeof Intl !== "undefined" && Intl.Segmenter) return Array.from(new Intl.Segmenter().segment(s), (x) => x.segment).slice(0, n).join("");
+  return Array.from(s).slice(0, n).join("");
+}
+function pinLabel(p) { return p.nama || hostOf(p.href); }
+function pinWarna(s) {
+  let h = 0;
+  for (const c of s || "") h = (h * 31 + c.codePointAt(0)) >>> 0;
+  return "hsl(" + (h % 360) + " 55% 40%)";
+}
+function pinIkon(p) {
+  const s = document.createElement("span");
+  s.className = "pin-ic";
+  if (p.gambar) {
+    const im = document.createElement("img");
+    im.src = p.gambar;
+    im.alt = "";
+    s.append(im);
+  } else {
+    s.textContent = p.ikon || grafem(pinLabel(p), 1).toUpperCase() || "•";
+    s.style.background = pinWarna(hostOf(p.href) || p.nama);
+  }
+  return s;
+}
+
+function renderPins() {
+  if (!pins.length) pinAtur = false;
+  $("btn-pin-edit").hidden = !pins.length;
+  $("btn-pin-edit").setAttribute("aria-pressed", String(pinAtur));
+  const g = $("pin-grid");
+  g.textContent = "";
+  g.classList.toggle("atur", pinAtur);
+  pins.forEach((p) => {
+    const a = document.createElement("a");
+    a.className = "pin";
+    a.href = p.href;
+    a.title = p.href;
+    const nm = document.createElement("span");
+    nm.className = "pin-nm";
+    nm.textContent = pinLabel(p);
+    a.append(pinIkon(p), nm);
+    a.addEventListener("click", (e) => {
+      if (!pinAtur) return;
+      e.preventDefault();
+      openPin(p.id);
+    });
+    g.append(a);
+  });
+  if (pins.length < MAX_PIN) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "pin pin-add";
+    b.title = "Tambah menu";
+    b.setAttribute("aria-label", "Tambah menu");
+    const ic = document.createElement("span");
+    ic.className = "pin-ic";
+    ic.textContent = "+";
+    const nm = document.createElement("span");
+    nm.className = "pin-nm";
+    nm.textContent = "Tambah";
+    b.append(ic, nm);
+    b.addEventListener("click", () => openPin(null));
+    g.append(b);
+  }
+}
+
+const dlgPin = $("dlg-pin");
+
+function formPin() {
+  const href = normalUrl($("pin-url").value);
+  return { href: href || "", nama: $("pin-nama").value.trim().slice(0, 30), ikon: grafem($("pin-ikon").value, 2), gambar: pinGambar };
+}
+function previewPin() {
+  const p = formPin();
+  $("pin-preview").replaceWith(Object.assign(pinIkon(p), { id: "pin-preview" }));
+  $("pin-img-clear").hidden = !pinGambar;
+}
+
+function openPin(id) {
+  const p = id ? pins.find((x) => x.id === id) : null;
+  pinTarget = p ? p.id : null;
+  $("pin-title").textContent = p ? "Ubah menu" : "Tambah menu";
+  $("pin-url").value = p ? p.href : "";
+  $("pin-nama").value = p ? p.nama : "";
+  $("pin-ikon").value = p ? p.ikon : "";
+  pinGambar = p ? p.gambar : "";
+  $("pin-del").hidden = !p;
+  $("pin-err").textContent = "";
+  previewPin();
+  dlgPin.showModal();
+  $("pin-url").focus();
+}
+
+["pin-url", "pin-nama", "pin-ikon"].forEach((id) => $(id).addEventListener("input", previewPin));
+$("btn-pin-edit").addEventListener("click", () => {
+  pinAtur = !pinAtur;
+  renderPins();
+});
+$("pin-cancel").addEventListener("click", () => dlgPin.close());
+$("pin-img-btn").addEventListener("click", () => $("pin-img").click());
+$("pin-img-clear").addEventListener("click", () => {
+  pinGambar = "";
+  previewPin();
+});
+
+// Gambar ikon: dipotong persegi dari tengah, jadi PNG 96x96
+function ikonDariFile(file, sisi = 96) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const s = Math.min(img.naturalWidth, img.naturalHeight);
+      if (!s) return reject(new Error("Gambar tidak bisa dibaca."));
+      const c = document.createElement("canvas");
+      c.width = c.height = sisi;
+      c.getContext("2d").drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, sisi, sisi);
+      resolve(c.toDataURL("image/png"));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Gambar tidak bisa dibaca."));
+    };
+    img.src = url;
+  });
+}
+$("pin-img").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  try {
+    pinGambar = await ikonDariFile(f);
+    $("pin-err").textContent = "";
+    previewPin();
+  } catch (err) {
+    $("pin-err").textContent = err.message;
+  }
+});
+
+$("form-pin").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = formPin();
+  if (!data.href) return ($("pin-err").textContent = "Link tidak valid (harus http:// atau https://).");
+  if (!pinTarget && pins.length >= MAX_PIN) return ($("pin-err").textContent = "Maksimal " + MAX_PIN + " menu.");
+  const next = pinTarget ? pins.map((x) => (x.id === pinTarget ? { ...x, ...data } : x)) : [...pins, { id: Date.now().toString(36), ...data }];
+  try {
+    await store.set("pins", next);
+  } catch (err) {
+    return ($("pin-err").textContent = "Gagal menyimpan: " + (err && err.message ? err.message : err));
+  }
+  pins = next;
+  dlgPin.close();
+  renderPins();
+});
+
+$("pin-del").addEventListener("click", async () => {
+  const p = pins.find((x) => x.id === pinTarget);
+  if (!p) return;
+  if (!(await popup({ judul: "Hapus menu", teks: 'Hapus menu "' + pinLabel(p) + '"?', ok: "Hapus", bahaya: true }))) return;
+  const next = pins.filter((x) => x.id !== p.id);
+  try {
+    await store.set("pins", next);
+  } catch (err) {
+    return ($("pin-err").textContent = "Gagal menghapus: " + (err && err.message ? err.message : err));
+  }
+  pins = next;
+  dlgPin.close();
+  renderPins();
 });
 
 // ---------- Pengaturan ----------
@@ -666,8 +727,9 @@ async function startBoard() {
   setInterval(tick, 1000);
   initQuote();
   applyBackground();
-  todos = await store.get("todos", []);
-  render();
+  const pn = await store.get("pins", []);
+  pins = Array.isArray(pn) ? pn.filter((x) => x && typeof x.href === "string") : [];
+  renderPins();
 }
 
 function showError(e) {

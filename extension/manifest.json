@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Aistim Board",
-  "version": "0.18.9",
-  "description": "Dashboard sederhana di tab baru: jam, sapaan, kutipan, daftar tugas, dan pengaturan latar.",
+  "version": "0.19.0",
+  "description": "Dashboard sederhana di tab baru: jam, sapaan, kutipan, menu pintasan, dan pengaturan latar.",
   "permissions": [
     "storage"
   ],

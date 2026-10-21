@@ -24,21 +24,43 @@
       <small id="quote-author"></small>
     </section>
 
-    <section class="todo">
-      <h2>Tugas</h2>
-      <form id="todo-form">
-        <input id="todo-input" type="text" placeholder="Tambah tugas, tekan Enter" autocomplete="off" required>
-      </form>
-      <ul id="todo-list"></ul>
-      <div class="todo-tools">
-        <button id="btn-export" type="button">Ekspor</button>
-        <button id="btn-import" type="button">Impor</button>
-        <button id="btn-clear-done" type="button">Hapus yang selesai</button>
-        <input id="file-import" type="file" accept="application/json,.json" hidden>
+    <section class="pins">
+      <div class="pins-head">
+        <h2>Menu</h2>
+        <button id="btn-pin-edit" class="pins-edit" type="button" title="Atur menu" aria-label="Atur menu" aria-pressed="false" hidden>✎</button>
       </div>
-      <p id="todo-msg" class="msg" role="status"></p>
+      <div id="pin-grid" class="pin-grid"></div>
+      <p id="board-msg" class="msg" role="status"></p>
     </section>
   </main>
+
+  <dialog id="dlg-pin">
+    <form method="dialog" id="form-pin">
+      <h2 id="pin-title">Tambah menu</h2>
+      <label>Link
+        <input id="pin-url" type="text" inputmode="url" maxlength="500" placeholder="https://contoh.com" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+      </label>
+      <label>Nama (opsional)
+        <input id="pin-nama" type="text" maxlength="30" placeholder="Kosong: pakai nama situs" autocomplete="off">
+      </label>
+      <label>Ikon
+        <input id="pin-ikon" type="text" maxlength="16" placeholder="Emoji atau huruf, mis. 🛒" autocomplete="off">
+      </label>
+      <div class="pin-row">
+        <span id="pin-preview" class="pin-ic"></span>
+        <button type="button" id="pin-img-btn">Pilih gambar…</button>
+        <button type="button" id="pin-img-clear" hidden>Hapus gambar</button>
+        <input id="pin-img" type="file" accept="image/*" hidden>
+      </div>
+      <small>Ikon kosong: otomatis huruf pertama dari nama. Gambar dipotong persegi dan diperkecil.</small>
+      <small id="pin-err" class="pin-err" role="alert"></small>
+      <menu>
+        <button type="button" id="pin-del" class="danger" hidden>Hapus</button>
+        <button type="button" id="pin-cancel">Batal</button>
+        <button type="submit" id="pin-ok" class="pri">Simpan</button>
+      </menu>
+    </form>
+  </dialog>
 
   <!--PRO-->
   <dialog id="dlg-key">
