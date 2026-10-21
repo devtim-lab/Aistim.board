@@ -193,6 +193,7 @@ function applyBackground() {
 const MAX_PIN = 24;
 let pins = []; // menu pribadi: [{ id, nama, href, ikon, gambar }]
 let pinsV = []; // menu bersama dari admin (data/menu.json, sudah diverifikasi tanda tangannya); hanya baca
+let pinAdmin = false; // true bila profil Aistim.sync di browser ini adalah admin yang public key-nya tertanam (verify.js)
 let pinAtur = false; // mode atur: ketuk menu untuk mengubah atau menghapus
 let pinTarget = null; // id yang sedang diubah di dialog; null = menu baru
 let pinGambar = ""; // data URL gambar ikon yang dipilih di dialog
@@ -250,9 +251,10 @@ function pinIkon(p) {
 
 function pinTile(p, bersama) {
   const a = document.createElement("a");
-  a.className = "pin" + (bersama ? " bersama" : "");
+  a.className = "pin" + (bersama ? " bersama" : "") + (!bersama && p.bagi ? " dibagi" : "");
+  if (!bersama && p.bagi) a.title = p.href + " (dibagikan ke semua pengguna saat diterbitkan)";
   a.href = p.href;
-  a.title = p.href;
+  if (!a.title) a.title = p.href;
   const nm = document.createElement("span");
   nm.className = "pin-nm";
   nm.textContent = pinLabel(p);
@@ -306,10 +308,12 @@ function renderPins() {
   if (!pins.length) pinAtur = false;
   $("btn-pin-edit").hidden = !pins.length;
   $("btn-pin-edit").setAttribute("aria-pressed", String(pinAtur));
+  $("btn-pin-bagi").hidden = !pinAdmin;
   const g = $("pin-grid");
   g.textContent = "";
   g.classList.toggle("atur", pinAtur);
-  pinsV.forEach((p) => g.append(pinTile(p, true)));
+  const sendiri = new Set(pins.map((p) => p.href)); // link yang sama dengan menu pribadi hanya ditampilkan sekali
+  pinsV.filter((p) => !sendiri.has(p.href)).forEach((p) => g.append(pinTile(p, true)));
   pins.forEach((p) => g.append(pinTile(p, false)));
   if (pins.length < MAX_PIN) {
     const b = document.createElement("button");
@@ -333,7 +337,7 @@ const dlgPin = $("dlg-pin");
 
 function formPin() {
   const href = normalUrl($("pin-url").value);
-  return { href: href || "", nama: $("pin-nama").value.trim().slice(0, 30), ikon: grafem($("pin-ikon").value, 2), gambar: pinGambar };
+  return { href: href || "", nama: $("pin-nama").value.trim().slice(0, 30), ikon: grafem($("pin-ikon").value, 2), gambar: pinGambar, bagi: pinAdmin && $("pin-bagi").checked };
 }
 function previewPin() {
   const p = formPin();
@@ -349,6 +353,8 @@ function openPin(id) {
   $("pin-nama").value = p ? p.nama : "";
   $("pin-ikon").value = p ? p.ikon : "";
   pinGambar = p ? p.gambar : "";
+  $("pin-bagi-row").hidden = !pinAdmin;
+  $("pin-bagi").checked = !!(p && p.bagi);
   $("pin-del").hidden = !p;
   $("pin-err").textContent = "";
   previewPin();
@@ -432,6 +438,155 @@ $("pin-del").addEventListener("click", async () => {
   dlgPin.close();
   renderPins();
 });
+
+// ---------- Terbitkan menu bersama (admin) ----------
+// Private key diturunkan dari password Aistim.sync: HKDF(PBKDF2(password, salt, iter)), rumus yang sama dengan menu/sync.js.
+// Salt dan iter tersimpan di profil browser ini (syncPass), jadi hanya browser tempat password admin dibuat yang menghasilkan key admin.
+const hx = (u) => Array.from(new Uint8Array(u), (b) => b.toString(16).padStart(2, "0")).join("");
+const hexBytes = (h) => Uint8Array.from(h.match(/../g).map((x) => parseInt(x, 16)));
+async function privDari(pw, saltHex, iter) {
+  const k = await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt: hexBytes(saltHex), iterations: iter }, k, 256));
+  return hx(Secp256k1.utils.hkdf(bits, hexBytes(saltHex), new TextEncoder().encode("aistim-sync-key"), 32));
+}
+
+const dlgBagi = $("dlg-bagi");
+let bagiTeks = "";
+let bagiSig = "";
+let bagiGagal = 0;
+
+function daftarBagi() {
+  return pins
+    .filter((p) => p.bagi)
+    .map((p) => {
+      const o = { nama: (p.nama || hostOf(p.href)).slice(0, 30), href: p.href };
+      if (p.ikon) o.ikon = p.ikon;
+      if (p.gambar) o.gambar = p.gambar;
+      return o;
+    });
+}
+function bagiMsg(t, err) {
+  const el = $("bagi-msg");
+  el.textContent = t;
+  el.style.color = err ? "#fca5a5" : "";
+}
+async function salin(t) {
+  try {
+    await navigator.clipboard.writeText(t);
+    return true;
+  } catch (e) {}
+  const ta = document.createElement("textarea"); // cadangan bila clipboard API ditolak
+  ta.value = t;
+  dlgBagi.append(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) {}
+  ta.remove();
+  return ok;
+}
+
+$("btn-pin-bagi").addEventListener("click", () => {
+  const list = daftarBagi();
+  const href = new Set(list.map((x) => x.href));
+  const hapus = pinsV.filter((p) => !href.has(p.href)).map((p) => p.nama);
+  let info = list.length
+    ? list.length + " menu akan dibagikan ke semua pengguna: " + list.map((x) => x.nama).join(", ") + "."
+    : "Belum ada menu bertanda Bagikan; menerbitkan akan mengosongkan menu bersama.";
+  if (hapus.length) info += " Akan dihapus dari semua pengguna: " + hapus.join(", ") + ".";
+  $("bagi-info").textContent = info;
+  $("bagi-pw").value = "";
+  bagiMsg("");
+  $("bagi-hasil").hidden = true;
+  $("bagi-ok").hidden = false;
+  bagiTeks = bagiSig = "";
+  dlgBagi.showModal();
+  $("bagi-pw").focus();
+});
+$("bagi-tutup").addEventListener("click", () => dlgBagi.close());
+$("bagi-copy-json").addEventListener("click", async () => bagiMsg((await salin(bagiTeks)) ? "menu.json tersalin." : "Gagal menyalin."));
+$("bagi-copy-sig").addEventListener("click", async () => bagiMsg((await salin(bagiSig + "\n")) ? "Tanda tangan tersalin." : "Gagal menyalin."));
+
+$("form-bagi").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pw = $("bagi-pw").value;
+  if (!pw) return;
+  $("bagi-ok").disabled = true;
+  try {
+    if (bagiGagal) await new Promise((r) => setTimeout(r, Math.min(bagiGagal, 5) * 1000)); // jeda makin lama bila salah
+    bagiMsg("Memeriksa password…");
+    const sp = await store.get("syncPass", null);
+    if (!sp || typeof sp.salt !== "string" || !Number.isInteger(sp.iter)) return bagiMsg("Belum ada password Aistim.sync di browser ini.", true);
+    const priv = await privDari(pw, sp.salt, sp.iter);
+    if (Secp256k1.getPublicKey(priv, true) !== AistimVerify.PUB) {
+      bagiGagal++;
+      return bagiMsg("Password salah, atau bukan password admin di browser ini.", true);
+    }
+    const list = daftarBagi();
+    if (!validMenu(list)) return bagiMsg("Daftar tidak lolos pemeriksaan (mis. gambar ikon terlalu besar; pakai emoji atau gambar lain).", true);
+    const teks = JSON.stringify({ versi: 1, menu: list }, null, 2) + "\n";
+    const bytes = new TextEncoder().encode(teks);
+    const sig = AistimVerify.tanda("menu.json", bytes, priv);
+    if (!AistimVerify.cek("menu.json", bytes, sig)) return bagiMsg("Pemeriksaan mandiri tanda tangan gagal.", true);
+    bagiGagal = 0;
+    bagiTeks = teks;
+    bagiSig = sig;
+    let hasil = null; // null = tidak ada fitur unggah; "" = terunggah; lainnya = alasan gagal
+    if (typeof unggahBagi === "function") hasil = await unggahBagi(teks, sig);
+    if (hasil === "") {
+      pinsV = bersihMenu(list);
+      try { await store.set("pinsV", pinsV); } catch (x) {}
+      renderPins();
+      $("bagi-ok").hidden = true;
+      bagiMsg("Terbit. Pengguna menerimanya saat membuka tab baru (cache GitHub bisa beberapa menit).");
+    } else {
+      $("bagi-hasil").hidden = false;
+      bagiMsg((hasil ? "Ditandatangani, belum terunggah: " + hasil + ". " : "Ditandatangani. ") + "Salin kedua isi ke data/menu.json dan data/menu.json.sig di repo, lalu commit.");
+    }
+  } finally {
+    $("bagi-ok").disabled = false;
+    $("bagi-pw").value = "";
+  }
+});
+
+/*PRO*/
+// Unggah menu.json dan menu.json.sig ke GitHub memakai token yang sudah disimpan lewat Aistim.sync (ikon kunci di bar bawah).
+const GH = { owner: "devtim-lab", repo: "Aistim.board", branch: "main" };
+const b64 = (str) => {
+  const bytes = new TextEncoder().encode(str);
+  let bin = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+};
+async function ghKirim(path, isi, token, pesan) {
+  const base = "https://api.github.com/repos/" + GH.owner + "/" + GH.repo + "/contents/" + path;
+  const head = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+  for (let coba = 0; coba < 2; coba++) {
+    const cur = await fetch(base + "?ref=" + GH.branch, { headers: head, cache: "no-store" });
+    let sha;
+    if (cur.status === 200) {
+      const j = await cur.json();
+      if ((j.content || "").replace(/\s/g, "") === b64(isi)) return "";
+      sha = j.sha;
+    } else if (cur.status === 401) return "token ditolak atau kedaluwarsa";
+    else if (cur.status !== 404) return "GitHub membalas " + cur.status;
+    const res = await fetch(base, { method: "PUT", headers: head, cache: "no-store", body: JSON.stringify({ message: pesan, content: b64(isi), branch: GH.branch, ...(sha ? { sha } : {}) }) });
+    if (res.ok) return "";
+    if (res.status === 401) return "token ditolak atau kedaluwarsa";
+    if (res.status === 403) return "token tidak punya izin (perlu Contents: Read and write)";
+    if (res.status !== 409 && res.status !== 422) return "GitHub membalas " + res.status; // 409/422 = sha basi, coba sekali lagi
+  }
+  return "berkas berubah di GitHub, coba lagi";
+}
+async function unggahBagi(teks, sig) {
+  const token = await store.get("ghToken", "");
+  if (!token) return "token GitHub belum disimpan (Aistim.sync, ikon kunci di bar bawah)";
+  try {
+    return (await ghKirim("data/menu.json", teks, token, "menu.json: menu bersama diperbarui dari Board (admin)")) || (await ghKirim("data/menu.json.sig", sig + "\n", token, "menu.json.sig: tanda tangan admin"));
+  } catch (e) {
+    return "tidak ada koneksi";
+  }
+}
+/*/PRO*/
 
 // ---------- Pengaturan ----------
 const dlg = $("dlg-settings");
@@ -772,6 +927,10 @@ async function startBoard() {
   pins = Array.isArray(pn) ? pn.filter((x) => x && typeof x.href === "string") : [];
   const pv = await store.get("pinsV", []); // salinan terverifikasi terakhir, agar tampil juga saat offline
   pinsV = validMenu(pv) ? pv : [];
+  try {
+    const sp = await store.get("syncPass", null);
+    pinAdmin = !!(sp && sp.pub && typeof AistimVerify !== "undefined" && sp.pub === AistimVerify.PUB);
+  } catch (e) {}
   renderPins();
   refreshMenuBersama(); // tidak ditunggu: halaman sudah tampil dengan salinan tersimpan
 }

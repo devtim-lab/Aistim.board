@@ -68,13 +68,21 @@ Format (maksimal 24 menu; `ikon` dan `gambar` opsional):
 - `gambar`: opsional, data URL PNG (`data:image/png;base64,...`, maksimal 60.000 karakter) sebagai ganti ikon. Gambar dari menu pribadi (kotak 96x96) bisa dipakai.
 - Satu entri yang tidak valid membuat seluruh daftar ditolak, supaya data setengah rusak tidak tampil.
 
-Menerbitkan (di komputer sendiri, private key jangan masuk repo):
+Menerbitkan, dua cara. Perubahan sampai ke pengguna saat mereka membuka tab baru (cache GitHub bisa beberapa menit).
+
+**1. Dari Board (admin, tanpa terminal).** Di browser tempat password Aistim.sync admin dibuat, kartu Menu menampilkan tombol **Terbitkan**, dan form menu punya kotak **Bagikan ke semua pengguna**. Centang Bagikan pada menu yang ingin dibagikan (muncul titik biru di ikonnya), lalu ketuk **Terbitkan** dan masukkan password. Private key diturunkan dari password (`HKDF(PBKDF2(password, salt, 200000))`, rumus yang sama dengan Aistim.sync), dipakai menandatangani `menu.json`, lalu dibuang; tidak pernah disimpan.
+
+- Versi lengkap langsung mengunggah `data/menu.json` dan `data/menu.json.sig` ke GitHub memakai token yang disimpan lewat Aistim.sync (ikon kunci di bar bawah). Versi Web Store, atau tanpa token, menampilkan tombol salin untuk kedua isi itu; tempel ke repo lalu commit.
+- Isi daftar = semua menu pribadi yang bertanda Bagikan. Menghapus tanda lalu menerbitkan ulang menariknya dari semua pengguna (dialog menyebut menu yang akan dihapus). Menerbitkan tanpa menu bertanda mengosongkan daftar.
+- Hanya browser yang salt-nya cocok dengan public key admin di `verify.js` yang bisa menandatangani. Salt dibuat acak saat password dibuat dan tersimpan di browser itu, jadi password yang sama di browser lain menghasilkan key lain dan ditolak.
+
+**2. Dari terminal** (di komputer sendiri, private key jangan masuk repo):
 
 ```
 AISTIM_ADMIN_KEY=<64 hex> node tools/sign.mjs data/menu.json
 ```
 
-Commit dan push `data/menu.json` bersama `data/menu.json.sig`. Perubahan sampai ke pengguna saat mereka membuka tab baru (cache GitHub bisa beberapa menit).
+Commit dan push `data/menu.json` bersama `data/menu.json.sig`.
 
 ## Verifikasi data dari GitHub
 

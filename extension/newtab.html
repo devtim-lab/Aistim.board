@@ -27,7 +27,10 @@
     <section class="pins">
       <div class="pins-head">
         <h2>Menu</h2>
-        <button id="btn-pin-edit" class="pins-edit" type="button" title="Atur menu" aria-label="Atur menu" aria-pressed="false" hidden>✎</button>
+        <div class="pins-act">
+          <button id="btn-pin-bagi" class="pins-bagi" type="button" title="Terbitkan menu bersama ke semua pengguna" hidden>Terbitkan</button>
+          <button id="btn-pin-edit" class="pins-edit" type="button" title="Atur menu" aria-label="Atur menu" aria-pressed="false" hidden>✎</button>
+        </div>
       </div>
       <div id="pin-grid" class="pin-grid"></div>
       <p id="board-msg" class="msg" role="status"></p>
@@ -53,6 +56,9 @@
         <input id="pin-img" type="file" accept="image/*" hidden>
       </div>
       <small>Ikon kosong: otomatis huruf pertama dari nama. Gambar dipotong persegi dan diperkecil.</small>
+      <label class="row" id="pin-bagi-row" hidden>
+        <input id="pin-bagi" type="checkbox"> Bagikan ke semua pengguna (admin)
+      </label>
       <small id="pin-err" class="pin-err" role="alert"></small>
       <menu>
         <button type="button" id="pin-del" class="danger" hidden>Hapus</button>
@@ -79,6 +85,26 @@
     </form>
   </dialog>
   <!--/PRO-->
+
+  <dialog id="dlg-bagi">
+    <form method="dialog" id="form-bagi">
+      <h2>Terbitkan menu bersama</h2>
+      <p id="bagi-info"></p>
+      <label>Password Aistim.sync (admin)
+        <input id="bagi-pw" type="password" autocomplete="current-password" autocapitalize="off" spellcheck="false">
+      </label>
+      <small>Private key diturunkan dari password ini hanya untuk menandatangani, lalu dibuang; tidak disimpan.</small>
+      <small id="bagi-msg" role="status"></small>
+      <div id="bagi-hasil" class="pin-row" hidden>
+        <button type="button" id="bagi-copy-json">Salin menu.json</button>
+        <button type="button" id="bagi-copy-sig">Salin tanda tangan</button>
+      </div>
+      <menu>
+        <button type="button" id="bagi-tutup">Tutup</button>
+        <button type="submit" id="bagi-ok" class="pri">Tandatangani</button>
+      </menu>
+    </form>
+  </dialog>
 
   <dialog id="dlg-menu">
     <form method="dialog" id="form-menu">
