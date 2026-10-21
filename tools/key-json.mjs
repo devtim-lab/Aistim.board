@@ -26,15 +26,27 @@ const S = require(path.join(root, "extension/sdk/secp256k1.js"));
 const PUB = (fs.readFileSync(path.join(root, "extension/menu/verify.js"), "utf8").match(/const PUB = "([0-9a-f]{66})"/) || [])[1];
 const INFO = "aistim-hub-token";
 const aad = (pub) => Buffer.from("aistim-key.json:v1:" + pub);
-const gagal = (m) => { console.error(m); process.exit(1); };
+// Di GitHub Actions, pesan galat ditampilkan sebagai anotasi (::error::) agar terlihat di ringkasan run.
+const gagal = (m) => { console.error(process.env.GITHUB_ACTIONS ? "::error::" + m : m); process.exit(1); };
+// Ciri nilai yang salah, tanpa membocorkan isinya: hanya panjang, jenis karakter, dan awalan token yang memang publik.
+const ciri = (v, token) => {
+  v = String(v || "");
+  const c = ["panjang " + v.length];
+  if (/-----BEGIN/.test(v)) c.push("berformat PEM");
+  else if (/^\s*(0x)?[0-9a-fA-F]+\s*$/.test(v)) c.push("hanya karakter hex");
+  else c.push("ada karakter bukan hex");
+  if (/\S\s+\S/.test(v)) c.push("ada spasi/baris baru di tengah");
+  if (token) c.push((v.trim().match(/^(github_pat_|ghp_|gho_|ghu_|ghs_|ghr_)/) || ["awalan tidak dikenal"])[0].replace(/^(?!awalan)/, "awalan "));
+  return c.join(", ");
+};
 
 const [perintah, berkasArg] = process.argv.slice(2);
 if (!["enkripsi", "cek", "tampil"].includes(perintah)) gagal("Pemakaian: node tools/key-json.mjs enkripsi|cek|tampil [data/key.json]");
 const berkas = path.resolve(berkasArg || path.join(root, "data/key.json"));
 
 const priv = (process.env.AISTIM_PRIVATE || "").trim().replace(/^0x/i, "").toLowerCase();
-if (!/^[0-9a-f]{64}$/.test(priv)) gagal("AISTIM_PRIVATE harus private key 64 karakter hex (bukan PEM).");
-if (S.getPublicKey(priv, true) !== PUB) gagal("AISTIM_PRIVATE bukan key admin yang tertanam di verify.js.");
+if (!/^[0-9a-f]{64}$/.test(priv)) gagal("AISTIM_PRIVATE harus private key 64 karakter hex (bukan PEM). Terbaca: " + ciri(process.env.AISTIM_PRIVATE) + ".");
+if (S.getPublicKey(priv, true) !== PUB) gagal("AISTIM_PRIVATE berformat benar tetapi BUKAN key admin yang tertanam di verify.js (public key-nya tidak cocok). Pakai private key admin yang sama dengan public key di akun.json.");
 const kunci = (saltHex) => Buffer.from(crypto.hkdfSync("sha256", Buffer.from(priv, "hex"), Buffer.from(saltHex, "hex"), Buffer.from(INFO), 32));
 const tokenSah = (t) => /^[A-Za-z0-9_\-]{20,255}$/.test(t);
 
@@ -55,7 +67,7 @@ function buka() {
 
 if (perintah === "enkripsi") {
   const token = (process.env.AISTIM_HUB || "").trim();
-  if (!tokenSah(token)) gagal("AISTIM_HUB kosong atau bukan token GitHub yang terlihat benar.");
+  if (!tokenSah(token)) gagal("AISTIM_HUB kosong atau bukan token GitHub yang terlihat benar (hanya huruf, angka, _ dan -; 20-255 karakter). Terbaca: " + ciri(process.env.AISTIM_HUB, true) + ".");
   const salt = crypto.randomBytes(16).toString("hex");
   const iv = crypto.randomBytes(12).toString("hex");
   const c = crypto.createCipheriv("aes-256-gcm", kunci(salt), Buffer.from(iv, "hex"));
