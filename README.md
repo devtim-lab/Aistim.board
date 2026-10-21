@@ -72,7 +72,7 @@ Menerbitkan, dua cara. Perubahan sampai ke pengguna saat mereka membuka tab baru
 
 **1. Dari Board (admin, tanpa terminal).** Di browser tempat password Aistim.sync admin dibuat, kartu Menu menampilkan tombol **Terbitkan**, dan form menu punya kotak **Bagikan ke semua pengguna**. Centang Bagikan pada menu yang ingin dibagikan (muncul titik biru di ikonnya), lalu ketuk **Terbitkan** dan masukkan password. Private key diturunkan dari password (`HKDF(PBKDF2(password, salt, 200000))`, rumus yang sama dengan Aistim.sync), dipakai menandatangani `menu.json`, lalu dibuang; tidak pernah disimpan.
 
-- Versi lengkap langsung mengunggah `data/menu.json` dan `data/menu.json.sig` ke GitHub memakai token yang disimpan lewat Aistim.sync (ikon kunci di bar bawah). Versi Web Store, atau tanpa token, menampilkan tombol salin untuk kedua isi itu; tempel ke repo lalu commit.
+- Versi lengkap langsung mengunggah `data/menu.json` dan `data/menu.json.sig` ke GitHub. Token diambil dari `data/key.json` (terenkripsi, lihat bagian Token terenkripsi) dan dibuka dengan key dari password yang baru saja Anda masukkan; bila tidak ada, dipakai token yang disimpan lewat Aistim.sync (ikon kunci di bar bawah). Versi Web Store, atau tanpa token, menampilkan tombol salin untuk kedua isi itu; tempel ke repo lalu commit.
 - Isi daftar = semua menu pribadi yang bertanda Bagikan. Menghapus tanda lalu menerbitkan ulang menariknya dari semua pengguna (dialog menyebut menu yang akan dihapus). Menerbitkan tanpa menu bertanda mengosongkan daftar.
 - Hanya browser yang salt-nya cocok dengan public key admin di `verify.js` yang bisa menandatangani. Salt dibuat acak saat password dibuat dan tersimpan di browser itu, jadi password yang sama di browser lain menghasilkan key lain dan ditolak.
 
@@ -83,6 +83,18 @@ AISTIM_ADMIN_KEY=<64 hex> node tools/sign.mjs data/menu.json
 ```
 
 Commit dan push `data/menu.json` bersama `data/menu.json.sig`.
+
+## Token terenkripsi (data/key.json)
+
+`data/key.json` berisi token GitHub (secret `AISTIM_HUB`) yang dienkripsi dengan kunci turunan private key admin (secret `AISTIM_PRIVATE`). Berkas ini aman di repo publik karena hanya pemegang private key admin yang bisa membukanya, dan Board (versi lengkap) membukanya hanya saat Terbitkan, dengan private key yang diturunkan dari password. Jadi token tidak perlu tersimpan mentah di browser.
+
+Membuat atau memperbaruinya: GitHub, Actions, **Encrypt hub token**, Run workflow (jalankan ulang bila token diganti). Workflow membaca kedua secret, mengenkripsi, memeriksa bahwa hasilnya bisa dibuka kembali dan sama dengan token aslinya, lalu mengommit `data/key.json`. Nilai secret tidak pernah dicetak.
+
+- Format: `{ versi, algoritma, pub, salt, iv, ct }`. Kunci AES-256 = HKDF-SHA256(private key 32 byte, `salt`, info `aistim-hub-token`); `ct` = hex dari AES-256-GCM(token) diikuti tag 16 byte; AAD = `aistim-key.json:v1:` + `pub`. Salt dan IV acak, jadi hasilnya berbeda tiap dijalankan. Perubahan satu karakter pun membuat pembukaan gagal.
+- Token cukup izin **Contents: Read and write** pada repo ini saja. Berkas ini hanya sekuat password admin: siapa pun yang mengetahui private key admin (atau password beserta salt-nya) bisa membuka tokennya, sekaligus menandatangani data. Pakai password yang kuat.
+- Sama seperti penandatanganan, Board hanya bisa membukanya di browser tempat password admin dibuat (salt-nya tersimpan di sana). Di tempat lain dipakai token tersimpan atau tombol salin.
+- Kode yang memegang kedua secret (`tools/key-json.mjs` dan `extension/sdk/secp256k1.js`) dikunci dengan hash di `encrypt-token.yml`, dengan aturan yang sama seperti Sign data.
+- Di komputer sendiri: `AISTIM_PRIVATE=<64 hex> node tools/key-json.mjs tampil` mencetak token (jangan dijalankan di tempat yang log-nya dibagikan).
 
 ## Verifikasi data dari GitHub
 

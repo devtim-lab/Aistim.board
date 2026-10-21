@@ -531,7 +531,7 @@ $("form-bagi").addEventListener("submit", async (e) => {
     bagiTeks = teks;
     bagiSig = sig;
     let hasil = null; // null = tidak ada fitur unggah; "" = terunggah; lainnya = alasan gagal
-    if (typeof unggahBagi === "function") hasil = await unggahBagi(teks, sig);
+    if (typeof unggahBagi === "function") hasil = await unggahBagi(teks, sig, priv);
     if (hasil === "") {
       pinsV = bersihMenu(list);
       try { await store.set("pinsV", pinsV); } catch (x) {}
@@ -577,9 +577,27 @@ async function ghKirim(path, isi, token, pesan) {
   }
   return "berkas berubah di GitHub, coba lagi";
 }
-async function unggahBagi(teks, sig) {
-  const token = await store.get("ghToken", "");
-  if (!token) return "token GitHub belum disimpan (Aistim.sync, ikon kunci di bar bawah)";
+// Token GitHub terenkripsi di data/key.json (dibuat workflow "Encrypt hub token"): AES-256-GCM, kunci = HKDF-SHA256 dari
+// private key admin. Hanya bisa dibuka dengan private key yang diturunkan dari password admin, yang baru ada saat Terbitkan.
+const KEY_URL = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/key.json";
+async function tokenDariKey(priv) {
+  try {
+    const r = await fetch(KEY_URL, { cache: "no-store" });
+    if (!r.ok) return "";
+    const j = await r.json();
+    if (!j || j.versi !== 1 || j.pub !== AistimVerify.PUB || !/^[0-9a-f]{32}$/.test(j.salt) || !/^[0-9a-f]{24}$/.test(j.iv) || !/^(?:[0-9a-f]{2}){17,1024}$/.test(j.ct)) return "";
+    const k = Secp256k1.utils.hkdf(hexBytes(priv), hexBytes(j.salt), new TextEncoder().encode("aistim-hub-token"), 32);
+    const kunci = await crypto.subtle.importKey("raw", k, "AES-GCM", false, ["decrypt"]);
+    const buf = await crypto.subtle.decrypt({ name: "AES-GCM", iv: hexBytes(j.iv), additionalData: new TextEncoder().encode("aistim-key.json:v1:" + j.pub), tagLength: 128 }, kunci, hexBytes(j.ct));
+    const t = new TextDecoder().decode(buf).trim();
+    return /^[A-Za-z0-9_\-]{20,255}$/.test(t) ? t : "";
+  } catch (e) {
+    return ""; // tidak ada, rusak, atau bukan untuk key ini: pakai token tersimpan
+  }
+}
+async function unggahBagi(teks, sig, priv) {
+  const token = (await tokenDariKey(priv)) || (await store.get("ghToken", ""));
+  if (!token) return "token GitHub belum ada (jalankan workflow Encrypt hub token di GitHub, atau simpan token lewat Aistim.sync)";
   try {
     return (await ghKirim("data/menu.json", teks, token, "menu.json: menu bersama diperbarui dari Board (admin)")) || (await ghKirim("data/menu.json.sig", sig + "\n", token, "menu.json.sig: tanda tangan admin"));
   } catch (e) {

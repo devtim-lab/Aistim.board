@@ -1,0 +1,67 @@
+name: Encrypt hub token
+
+# Membuat data/key.json: token GitHub (secret AISTIM_HUB) dienkripsi dengan kunci turunan private key admin
+# (secret AISTIM_PRIVATE, 64 karakter hex), lalu mengommitnya ke main. Berkas itu aman di repo publik: hanya
+# pemegang private key admin (key yang diturunkan dari password Aistim.sync) yang bisa membukanya.
+# Board (versi lengkap) membukanya saat tombol Terbitkan, jadi token tidak perlu tersimpan mentah di browser.
+#
+# Cara pakai: GitHub -> Actions -> "Encrypt hub token" -> Run workflow. Jalankan ulang bila token diganti.
+# Hanya manual dan hanya dari branch main. Nilai secret tidak pernah dicetak.
+#
+# Perlindungan: langkah "Enkripsi" memegang kedua secret, jadi kode yang berjalan di dalamnya
+# (tools/key-json.mjs dan extension/sdk/secp256k1.js, hanya memakai modul bawaan Node) dikunci dengan hash di bawah.
+# Bila berubah, langkah berhenti sebelum secret dipakai. Setelah SENGAJA mengubah salah satunya, perbarui hash:
+#   sha256sum tools/key-json.mjs extension/sdk/secp256k1.js
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: encrypt-token
+  cancel-in-progress: false
+
+env:
+  KEYJSON_SHA256: e49f3604b067b3b40f3490ed7bb959887ce47d1b67a553fbba2ea7d5a88905bf
+  SDK_SHA256: 76ed78599619b27a28403fb0e43920b64d7c9847f27f1d0a5f62ef2ac1e8f449
+
+jobs:
+  encrypt:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Kunci kode enkripsi
+        run: |
+          echo "$KEYJSON_SHA256  tools/key-json.mjs" | sha256sum -c -
+          echo "$SDK_SHA256  extension/sdk/secp256k1.js" | sha256sum -c -
+
+      - name: Enkripsi
+        env:
+          AISTIM_PRIVATE: ${{ secrets.AISTIM_PRIVATE }}
+          AISTIM_HUB: ${{ secrets.AISTIM_HUB }}
+        run: |
+          [ -n "$AISTIM_PRIVATE" ] || { echo "::error::Secret AISTIM_PRIVATE belum diisi."; exit 1; }
+          [ -n "$AISTIM_HUB" ] || { echo "::error::Secret AISTIM_HUB belum diisi."; exit 1; }
+          node tools/key-json.mjs enkripsi data/key.json
+          node tools/key-json.mjs cek data/key.json
+
+      - name: Commit key.json
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          git add data/key.json
+          if git diff --cached --quiet; then
+            echo "key.json tidak berubah."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "key.json: token GitHub terenkripsi dengan key admin [skip ci]"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
