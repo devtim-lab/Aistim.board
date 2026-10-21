@@ -96,6 +96,13 @@ AISTIM_ADMIN_KEY=<64 hex> node tools/sign.mjs data/tiles.json data/sync.html
 
 Commit dan push berkas `*.sig` bersama datanya. Di versi lengkap, upload dari Aistim.sync otomatis ikut menandatangani `data/sync.html.sig` bila key admin (hex) tersimpan lewat ikon kunci di Board.
 
+**Tanpa komputer: workflow Sign data.** `.github/workflows/sign-data.yml` menandatangani `data/tiles.json`, `data/sync.html`, dan `data/menu.json` di GitHub lalu mengommit berkas `.sig`-nya. Jalankan lewat GitHub, Actions, Sign data, Run workflow (bisa dari aplikasi GitHub di HP). Syaratnya satu secret repo (Settings, Secrets and variables, Actions): `AISTIM_PRIVATE` berisi private key admin 64 karakter hex (bukan PEM). Token tambahan tidak diperlukan; commit memakai `GITHUB_TOKEN` bawaan.
+
+- Hanya manual, tidak otomatis saat push. Data ditandatangani apa adanya, jadi periksa dulu commit terbaru yang menyentuh `data/`. Isi kolom `sha` (awal SHA commit yang sudah diperiksa) bila ingin workflow berhenti kalau `main` sudah bergeser.
+- Private key hanya dipakai langkah "Tandatangani". Kode yang berjalan bersamanya (`tools/sign.mjs` dan `extension/sdk/secp256k1.js`, hanya memakai modul bawaan Node) dikunci dengan hash di workflow: bila berubah, langkah berhenti sebelum key dipakai. Setelah sengaja mengubah salah satunya, perbarui hash di `sign-data.yml` (`sha256sum tools/sign.mjs extension/sdk/secp256k1.js`).
+- Sisa risiko: data yang diubah orang lain ikut ditandatangani bila Anda menjalankan workflow tanpa memeriksanya. Pemegang izin Workflows di repo ini bisa mengubah workflow dan membaca secret, jadi jangan beri token upload izin itu.
+- `akun.json.sig` tidak termasuk; tanda tangan akun (130 hex) dibuat lewat panel profil Aistim.sync.
+
 ## Daftar akun (akun.json)
 
 `data/akun.json` (publik) berisi akun: `nama`, `addr`, `pub`, `role` (`admin` atau `user`), `script`, `dibuat`, dengan format yang sama seperti `akun.json` di repo Auth. Hanya data publik; jangan menaruh hash password, private key, atau token di sana. Identitas = pasangan kunci yang diturunkan dari password Aistim.sync (lihat panel profil).
