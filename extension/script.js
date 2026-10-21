@@ -191,7 +191,8 @@ function applyBackground() {
 
 // ---------- Menu (pintasan di Board) ----------
 const MAX_PIN = 24;
-let pins = []; // [{ id, nama, href, ikon, gambar }]
+let pins = []; // menu pribadi: [{ id, nama, href, ikon, gambar }]
+let pinsV = []; // menu bersama dari admin (data/menu.json, sudah diverifikasi tanda tangannya); hanya baca
 let pinAtur = false; // mode atur: ketuk menu untuk mengubah atau menghapus
 let pinTarget = null; // id yang sedang diubah di dialog; null = menu baru
 let pinGambar = ""; // data URL gambar ikon yang dipilih di dialog
@@ -247,6 +248,60 @@ function pinIkon(p) {
   return s;
 }
 
+function pinTile(p, bersama) {
+  const a = document.createElement("a");
+  a.className = "pin" + (bersama ? " bersama" : "");
+  a.href = p.href;
+  a.title = p.href;
+  const nm = document.createElement("span");
+  nm.className = "pin-nm";
+  nm.textContent = pinLabel(p);
+  a.append(pinIkon(p), nm);
+  a.addEventListener("click", (e) => {
+    if (!pinAtur) return;
+    e.preventDefault();
+    if (bersama) msg("Menu bersama dari admin, tidak bisa diubah di sini.");
+    else openPin(p.id);
+  });
+  return a;
+}
+
+// ---- Menu bersama: data/menu.json di GitHub, dipakai hanya bila tanda tangan admin cocok (menu/verify.js) ----
+const MENU_URL = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/data/menu.json";
+function validMenu(m) {
+  return (
+    Array.isArray(m) &&
+    m.length <= MAX_PIN &&
+    m.every(
+      (x) =>
+        x &&
+        typeof x.nama === "string" && x.nama.length <= 30 &&
+        typeof x.href === "string" && x.href.length <= 500 && !!normalUrl(x.href) &&
+        (x.ikon === undefined || (typeof x.ikon === "string" && x.ikon.length <= 16)) &&
+        (x.gambar === undefined || x.gambar === "" || (typeof x.gambar === "string" && x.gambar.length <= 60000 && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(x.gambar)))
+    )
+  );
+}
+function bersihMenu(m) {
+  return m.map((x, i) => ({ id: "b" + i, nama: x.nama.trim(), href: normalUrl(x.href), ikon: x.ikon || "", gambar: x.gambar || "" }));
+}
+async function refreshMenuBersama() {
+  try {
+    if (typeof AistimVerify === "undefined") return;
+    const [res, sg] = await Promise.all([fetch(MENU_URL, { cache: "no-cache" }), fetch(MENU_URL + ".sig", { cache: "no-cache" })]);
+    if (!res.ok || !sg.ok) return;
+    const buf = new Uint8Array(await res.arrayBuffer());
+    if (!AistimVerify.cek("menu.json", buf, await sg.text())) return; // tanda tangan admin tidak cocok: abaikan
+    const d = JSON.parse(new TextDecoder().decode(buf));
+    if (!d || !validMenu(d.menu)) return;
+    const baru = bersihMenu(d.menu);
+    if (JSON.stringify(baru) === JSON.stringify(pinsV)) return;
+    await store.set("pinsV", baru);
+    pinsV = baru;
+    renderPins();
+  } catch (e) {}
+}
+
 function renderPins() {
   if (!pins.length) pinAtur = false;
   $("btn-pin-edit").hidden = !pins.length;
@@ -254,22 +309,8 @@ function renderPins() {
   const g = $("pin-grid");
   g.textContent = "";
   g.classList.toggle("atur", pinAtur);
-  pins.forEach((p) => {
-    const a = document.createElement("a");
-    a.className = "pin";
-    a.href = p.href;
-    a.title = p.href;
-    const nm = document.createElement("span");
-    nm.className = "pin-nm";
-    nm.textContent = pinLabel(p);
-    a.append(pinIkon(p), nm);
-    a.addEventListener("click", (e) => {
-      if (!pinAtur) return;
-      e.preventDefault();
-      openPin(p.id);
-    });
-    g.append(a);
-  });
+  pinsV.forEach((p) => g.append(pinTile(p, true)));
+  pins.forEach((p) => g.append(pinTile(p, false)));
   if (pins.length < MAX_PIN) {
     const b = document.createElement("button");
     b.type = "button";
@@ -729,7 +770,10 @@ async function startBoard() {
   applyBackground();
   const pn = await store.get("pins", []);
   pins = Array.isArray(pn) ? pn.filter((x) => x && typeof x.href === "string") : [];
+  const pv = await store.get("pinsV", []); // salinan terverifikasi terakhir, agar tampil juga saat offline
+  pinsV = validMenu(pv) ? pv : [];
   renderPins();
+  refreshMenuBersama(); // tidak ditunggu: halaman sudah tampil dengan salinan tersimpan
 }
 
 function showError(e) {

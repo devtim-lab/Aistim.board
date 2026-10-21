@@ -18,13 +18,13 @@ Semua berikut hanya tersimpan di browser ini (`chrome.storage.local` dan `localS
 - HTML tampilan Aistim.sync dan tampilan buatan sendiri yang kamu tulis atau impor;
 - riwayat chat di tampilan Aistim (balasan dibuat lokal);
 - hash password Aistim.sync bila kamu membuatnya (PBKDF2-SHA256 dengan salt; passwordnya sendiri tidak disimpan);
-- salinan terakhir data tile dan HTML yang sudah diverifikasi, agar bisa dipakai offline.
+- salinan terakhir data tile, HTML, dan menu bersama yang sudah diverifikasi, agar bisa dipakai offline.
 
 Menghapus extension atau datanya dari pengaturan browser menghapus semuanya. Password yang lupa tidak bisa dipulihkan.
 
 ## Koneksi jaringan
 
-Extension hanya mengambil dua berkas data publik beserta tanda tangannya dari `https://raw.githubusercontent.com/devtim-lab/Aistim.board/` (`data/tiles.json`, `data/sync.html`, dan berkas `.sig`-nya). Permintaan ini tidak membawa data pribadimu. Seperti permintaan web biasa, GitHub dapat mencatat alamat IP dan informasi browser sesuai kebijakan privasi GitHub. Data hanya dipakai bila tanda tangannya cocok dengan kunci publik yang tertanam di extension.
+Extension hanya mengambil tiga berkas data publik beserta tanda tangannya dari `https://raw.githubusercontent.com/devtim-lab/Aistim.board/` (`data/tiles.json`, `data/sync.html`, `data/menu.json`, dan berkas `.sig`-nya). `data/menu.json` berisi daftar menu bersama (nama, link, ikon) yang tampil di kartu Menu untuk semua pengguna. Permintaan ini tidak membawa data pribadimu. Seperti permintaan web biasa, GitHub dapat mencatat alamat IP dan informasi browser sesuai kebijakan privasi GitHub. Data hanya dipakai bila tanda tangannya cocok dengan kunci publik yang tertanam di extension.
 
 ### Foto online (opsional)
 

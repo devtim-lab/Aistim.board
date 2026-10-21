@@ -85,7 +85,7 @@ body {
 .pin-ic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pin-nm { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: 0.9; }
 .pin-add .pin-ic { background: none; border: 2px dashed rgba(255, 255, 255, 0.4); font-size: 28px; font-weight: 300; }
-.pin-grid.atur .pin:not(.pin-add) .pin-ic { outline: 2px dashed rgba(255, 255, 255, 0.75); outline-offset: 2px; }
+.pin-grid.atur .pin:not(.pin-add):not(.bersama) .pin-ic { outline: 2px dashed rgba(255, 255, 255, 0.75); outline-offset: 2px; }
 
 /* ---- v0.2 ---- */
 .gear {

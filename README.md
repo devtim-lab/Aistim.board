@@ -9,6 +9,7 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 - Kutipan harian
 - Latar: berganti tiap hari, pilih warna, atau gambar sendiri (otomatis diperkecil)
 - Kartu **Menu**: pintasan ke situs favorit. Tombol **+** membuka form Link, Nama (opsional), dan Ikon (emoji/huruf, atau gambar sendiri yang otomatis dipotong persegi dan diperkecil); tanpa ikon dipakai huruf pertama nama. Link tanpa `https://` dilengkapi otomatis; hanya `http`/`https` yang diterima. Tombol ✎ di kartu masuk ke mode atur: ketuk menu untuk mengubah atau menghapusnya. Maksimal 24 menu, tersimpan di perangkat (`chrome.storage.local`, kunci `pins`)
+- **Menu bersama**: menu yang tampil di semua pengguna, dikelola admin lewat `data/menu.json` (lihat bagian Menu bersama)
 - Daftar tugas dari versi lama sudah tidak ditampilkan; datanya (`todos`) tidak dihapus dari browser
 - Tampilan **Start (Aistim.icu)** bergaya Windows 8, tersimpan di dalam extension sehingga jalan tanpa internet; pilih di Pengaturan → Tampilan ("Aistim"), kembali lewat tautan di footer
 - Tile tampilan Start bisa diubah tanpa rilis: edit `data/tiles.json` lalu push ke `main`; extension mengambilnya dari GitHub saat online dan menyimpannya untuk offline
@@ -47,9 +48,37 @@ Di halaman Aistim.sync (footer): **Edit** (editor langsung, tersimpan di perangk
 
 Ikon awan-panah di footer Aistim.sync menyimpan HTML ke `data/sync.html` di repo ini lewat API GitHub, sehingga semua perangkat mengikutinya. Ikon kunci untuk mengisi atau menghapus token. Token dibuat sendiri (fine-grained, hanya repo Aistim.board, izin **Contents: Read and write**) dan hanya tersimpan di browser itu. Repo ini public, jadi isi yang diunggah bisa dibaca siapa saja.
 
+## Menu bersama (tampil di semua pengguna)
+
+Selain menu pribadi, kartu Menu di Board menampilkan menu bersama dari `data/menu.json`. Isinya sama untuk semua pengguna, ditaruh sebelum menu pribadi, dan hanya bisa dibaca (di mode atur, ketukan hanya menampilkan pemberitahuan). Cara kerjanya sama dengan `data/tiles.json`: extension mengambilnya dari GitHub saat online, menyimpannya untuk offline, dan **hanya memakainya bila ada `data/menu.json.sig` yang cocok dengan public key admin**. Tanpa tanda tangan, atau bila isinya diubah, daftarnya diabaikan.
+
+Format (maksimal 24 menu; `ikon` dan `gambar` opsional):
+
+```json
+{
+  "versi": 1,
+  "menu": [
+    { "nama": "CRM", "href": "https://crm.aistim.icu", "ikon": "🏢" },
+    { "nama": "Shopee", "href": "https://subaccount.shopee.com/shops" }
+  ]
+}
+```
+
+- `href`: link `http`/`https`. `nama`: maksimal 30 karakter. `ikon`: emoji atau 1–2 huruf; kosong berarti huruf pertama nama.
+- `gambar`: opsional, data URL PNG (`data:image/png;base64,...`, maksimal 60.000 karakter) sebagai ganti ikon. Gambar dari menu pribadi (kotak 96x96) bisa dipakai.
+- Satu entri yang tidak valid membuat seluruh daftar ditolak, supaya data setengah rusak tidak tampil.
+
+Menerbitkan (di komputer sendiri, private key jangan masuk repo):
+
+```
+AISTIM_ADMIN_KEY=<64 hex> node tools/sign.mjs data/menu.json
+```
+
+Commit dan push `data/menu.json` bersama `data/menu.json.sig`. Perubahan sampai ke pengguna saat mereka membuka tab baru (cache GitHub bisa beberapa menit).
+
 ## Verifikasi data dari GitHub
 
-Data yang diambil dari GitHub (`data/tiles.json`, `data/sync.html`) hanya dipakai bila ada berkas tanda tangan `<nama>.sig` yang cocok dengan public key admin (tertanam di `extension/menu/verify.js`, sama dengan admin di `akun.json` repo Auth). Tanda tangan ECDSA secp256k1 memakai library `extension/sdk/secp256k1.js` dari SDK Aistim. Ini hanya memeriksa data; tidak ada kode yang diunduh atau dijalankan. Data yang tidak ada tanda tangannya, tidak cocok, atau diubah diabaikan, dan extension memakai salinan terverifikasi terakhir atau data bawaan.
+Data yang diambil dari GitHub (`data/tiles.json`, `data/sync.html`, `data/menu.json`) hanya dipakai bila ada berkas tanda tangan `<nama>.sig` yang cocok dengan public key admin (tertanam di `extension/menu/verify.js`, sama dengan admin di `akun.json` repo Auth). Tanda tangan ECDSA secp256k1 memakai library `extension/sdk/secp256k1.js` dari SDK Aistim. Ini hanya memeriksa data; tidak ada kode yang diunduh atau dijalankan. Data yang tidak ada tanda tangannya, tidak cocok, atau diubah diabaikan, dan extension memakai salinan terverifikasi terakhir atau data bawaan.
 
 Menandatangani (di komputer sendiri, private key jangan masuk repo):
 
