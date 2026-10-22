@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Aistim Tab",
+  "version": "1.0.0",
+  "description": "Tab baru berisi menu pintasan: tambah, ubah, dan hapus link dengan ikon otomatis dari situsnya.",
+  "permissions": [
+    "storage"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlUzsLPamidIpQeYPgtQPkXd6wR9xoLb944HM1RI9wur1xwCGQzgwS00zbwqO887KpIqXy2XIHzg5UmNe2BL68O4bR397bNrlMkiQoFOIoxGe2ChpYCzhjWd3i2ORX729bZm/avW3qeNQYDWQ4edF95ry7UtmRwCAuTarQ5Pa6cXsOiZV7DnbDFmlXEh5eN8uEJEtmw8vZPYCN0qBh2Gyf1Y/Bej2WfNnpMmgAbRZefwySiDadEC/DFSDXea5/5soXblZwJbzcmUwR+B5830/Wz6CA1iL2DcgRXoHsE16RBO/Dz8ZcpCoZ62aLc8hyX4UmDs+9+PIODuE22d1vCR6lwIDAQAB"
+}

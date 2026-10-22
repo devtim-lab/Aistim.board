@@ -1,0 +1,143 @@
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #fff;
+  background: linear-gradient(160deg, #0a4a57 0%, #0b6672 48%, #08505b 100%);
+  background-attachment: fixed;
+}
+
+.halaman {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(16px, 8vh, 96px) 16px 24px;
+}
+
+.pins { width: 100%; max-width: 460px; --ic: 56px; }
+
+/* Kartu berbalik: depan = menu, belakang = atur. Kedua sisi menempati sel grid yang sama, jadi tinggi kartu mengikuti yang lebih tinggi. */
+.flip { perspective: 1400px; }
+.flip-in { display: grid; grid-template-columns: minmax(0, 1fr); transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.3, 0.7, 0.2, 1); }
+.flip.balik .flip-in { transform: rotateY(180deg); }
+.face {
+  grid-area: 1 / 1;
+  min-width: 0;
+  padding: clamp(14px, 4vw, 20px);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: visibility 0s linear 0.3s; /* sisi yang tertutup disembunyikan setelah setengah putaran: tidak bisa difokus atau diketuk */
+}
+.face.belakang { display: flex; flex-direction: column; transform: rotateY(180deg); visibility: hidden; }
+.flip.balik .belakang { visibility: visible; transition-delay: 0s; }
+.flip.balik .depan { visibility: hidden; }
+
+.pins-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; min-height: 34px; }
+.pins-head h2 { margin: 0; font-size: 16px; }
+.pins-btn { min-height: 32px; padding: 5px 14px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px; background: none; color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.pins-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.pins-btn.pri { background: #2563eb; border-color: #2563eb; }
+.pins-btn.pri:hover { background: #1d4ed8; }
+.pins-kosong { margin: 0 0 10px; padding: 8px 0; text-align: center; font-size: 14px; opacity: 0.75; }
+.pins-kosong[hidden], .pin-list[hidden] { display: none; }
+
+/* Sisi depan: tile menu + tile "Tambahkan baru" */
+.pin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 14px 8px; }
+.pin {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: #fff;
+  font: inherit;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.pin:hover { background: rgba(255, 255, 255, 0.1); }
+.pin-ic {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--ic, 56px);
+  height: var(--ic, 56px);
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.15);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+}
+.pin-ic img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pin-ic.fav { background: rgba(255, 255, 255, 0.92); }
+.pin-ic.fav img { width: 58%; height: 58%; object-fit: contain; }
+.pin-ic.plus { background: rgba(240, 242, 250, 0.95); color: #1f2937; }
+.pin-ic.plus svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.pin-nm { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; opacity: 0.92; }
+.pin.tambah .pin-nm { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; font-size: 12px; line-height: 1.25; }
+
+/* Sisi belakang: daftar dengan Ubah dan Hapus */
+.pin-list { flex: 1; display: flex; flex-direction: column; gap: 6px; max-height: clamp(180px, 38vh, 300px); margin: 0 0 12px; padding: 0 2px 0 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.baris { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 10px; background: rgba(255, 255, 255, 0.07); }
+.baris .pin-ic { --ic: 40px; font-size: 19px; }
+.baris-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.baris-t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; }
+.baris-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: 0.65; }
+.ico2 { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; opacity: 0.8; }
+.ico2 svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ico2:hover { background: rgba(255, 255, 255, 0.15); opacity: 1; }
+.ico2.hapus:hover { background: rgba(185, 28, 28, 0.6); }
+.pin-tambah { width: 100%; padding: 11px; border: 2px dashed rgba(255, 255, 255, 0.4); border-radius: 10px; background: none; color: #fff; font: inherit; font-size: 14px; cursor: pointer; }
+.pin-tambah:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.pin-tambah:disabled { opacity: 0.5; cursor: not-allowed; }
+.ver { display: block; margin-top: 10px; font-size: 11px; opacity: 0.55; overflow-wrap: anywhere; }
+
+.msg { min-height: 18px; margin: 8px 4px 0; font-size: 13px; opacity: 0.9; }
+
+/* Dialog */
+dialog {
+  width: min(92vw, 380px);
+  padding: 20px;
+  border: 0;
+  border-radius: 14px;
+  background: #1f2937;
+  color: #fff;
+}
+dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+dialog h2 { margin: 0 0 14px; font-size: 18px; }
+dialog label { display: block; margin-bottom: 14px; font-size: 14px; }
+dialog input[type=text] { display: block; width: 100%; margin-top: 6px; padding: 9px 10px; border: 0; border-radius: 8px; font-size: 15px; }
+dialog small { display: block; margin-top: 6px; opacity: 0.7; }
+dialog menu { display: flex; justify-content: flex-end; gap: 8px; margin: 18px 0 0; padding: 0; }
+dialog menu button { padding: 9px 16px; border: 0; border-radius: 8px; background: #334155; color: #fff; font-size: 14px; cursor: pointer; }
+dialog menu button.pri { background: #2563eb; }
+dialog menu button.danger { background: #b91c1c; }
+#dlg-pin menu button.danger { margin-right: auto; }
+dialog button[hidden] { display: none; }
+.pin-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.pin-row .pin-ic { --ic: 44px; font-size: 20px; }
+#pin-info { flex: 1; margin: 0; }
+#pin-lain { margin: 6px 0 10px; }
+#pin-lain summary { cursor: pointer; font-size: 14px; padding: 6px 0; }
+.pin-err { color: #fca5a5; min-height: 1em; }
+.hapus-teks { margin: 0; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+
+@media (prefers-reduced-motion: reduce) { .flip-in, .face { transition: none; } }
+@media (min-width: 768px) {
+  .pins { max-width: 600px; --ic: 60px; }
+  .pin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; max-height: 260px; }
+}
+@media (max-width: 360px) {
+  .pins { --ic: 48px; }
+  .pin-grid { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px 4px; }
+}
