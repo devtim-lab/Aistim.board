@@ -136,6 +136,13 @@ async function privDari(pw, saltHex, iter) {
   const bits = await pbkdf(pw, saltHex, iter);
   return hx(Secp256k1.utils.hkdf(bits, hexBytes(saltHex), new TextEncoder().encode("aistim-sync-key"), 32));
 }
+// Kunci ID (salt): 32 karakter hex dipakai apa adanya; teks lain (8-200 karakter) dijadikan 16 byte lewat SHA-256.
+async function saltDariKunci(k) {
+  k = (k || "").trim();
+  if (/^[0-9a-fA-F]{32}$/.test(k)) return k.toLowerCase();
+  if (k.length < 8 || k.length > 200) return null;
+  return hx(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("aistim-sync-kunci-id:v1:" + k))).slice(0, 16));
+}
 async function profilDari(pw, saltHex, iter) {
   const priv = await privDari(pw, saltHex, iter);
   const pub = Secp256k1.getPublicKey(priv, true);
@@ -183,7 +190,7 @@ function pasangMata(inp) {
   new MutationObserver(segarkan).observe(inp, { attributes: true, attributeFilter: ["type"] });
   segarkan();
 }
-for (const id of ["lk-in", "pw-old", "pw-new", "pw-new2", "ak-pass"]) pasangMata($(id));
+for (const id of ["lk-in", "pw-old", "pw-new", "pw-new2", "pw-key", "ak-pass"]) pasangMata($(id));
 let gagalPw = 0;
 async function bukaKunci() {
   const pw = $("lk-in").value;
@@ -236,7 +243,8 @@ async function bukaPw(e) {
   e.preventDefault();
   const rec = await get("syncPass");
   punyaPw = !!(rec && rec.hash);
-  for (const id of ["pw-old", "pw-new", "pw-new2"]) { $(id).value = ""; $(id).type = "password"; }
+  for (const id of ["pw-old", "pw-new", "pw-new2", "pw-key"]) { $(id).value = ""; $(id).type = "password"; }
+  $("pw-key").placeholder = punyaPw ? "Kunci ID (kosong: tetap yang sekarang)" : "Kunci ID (kosong: dibuat acak)";
   $("pw-old").hidden = !punyaPw;
   $("pw-del").hidden = !punyaPw;
   $("pw-t").textContent = punyaPw ? "Ubah password Aistim.sync" : "Buat password Aistim.sync";
@@ -245,7 +253,7 @@ async function bukaPw(e) {
   (punyaPw ? $("pw-old") : $("pw-new")).focus();
 }
 $("pf-pw").addEventListener("click", (e) => { $("pf").classList.remove("on"); bukaPw(e); });
-$("pw-cancel").addEventListener("click", () => { $("pw").classList.remove("on"); for (const id of ["pw-old", "pw-new", "pw-new2"]) $(id).type = "password"; });
+$("pw-cancel").addEventListener("click", () => { $("pw").classList.remove("on"); for (const id of ["pw-old", "pw-new", "pw-new2", "pw-key"]) $(id).type = "password"; });
 async function pwLama() {
   if (!punyaPw) return true;
   if (await cekPw($("pw-old").value, await get("syncPass"))) return true;
@@ -257,15 +265,19 @@ $("pw-save").addEventListener("click", async () => {
   const a = $("pw-new").value;
   if (a.length < 4 || a.length > 200) { $("pw-msg").textContent = "Password minimal 4 karakter."; return; }
   if (a !== $("pw-new2").value) { $("pw-msg").textContent = "Pengulangan tidak sama."; return; }
-  const salt = hx(crypto.getRandomValues(new Uint8Array(16)));
+  // Kunci ID = salt. Diisi: dipakai (supaya Addr sama di perangkat lain). Kosong: tetap yang sekarang, atau acak bila belum ada.
+  const lama = await get("syncPass");
+  const kunci = $("pw-key").value.trim();
+  let salt = kunci ? await saltDariKunci(kunci) : lama && /^[0-9a-f]{32}$/.test(lama.salt) ? lama.salt : hx(crypto.getRandomValues(new Uint8Array(16)));
+  if (!salt) { $("pw-msg").textContent = "Kunci ID: 32 karakter hex dari Profil, atau frasa minimal 8 karakter."; return; }
   const hash = await hashPw(a, salt, PW_ITER, 2);
   const pr = await profilDari(a, salt, PW_ITER);
   if (!(await put({ syncPass: { v: 2, salt, iter: PW_ITER, hash, ...pr } }))) { $("pw-msg").textContent = "Gagal menyimpan."; return; }
   segarLogin();
   await sesi.buat(hash); // yang baru saja membuat atau mengubah password tetap masuk
   $("pw").classList.remove("on");
-  for (const id of ["pw-new", "pw-new2"]) { $(id).type = "password"; $(id).value = ""; }
-  note("Password disimpan");
+  for (const id of ["pw-new", "pw-new2", "pw-key"]) { $(id).type = "password"; $(id).value = ""; }
+  note("Password disimpan. Addr " + pr.addr.slice(0, 6) + "…" + pr.addr.slice(-4));
 });
 $("pw-del").addEventListener("click", async () => {
   if (!(await pwLama())) return;
@@ -343,20 +355,20 @@ $("prof").addEventListener("click", async (e) => {
   $("pf-pw").hidden = lihat;
   if (lihat) {
     $("pf-p").textContent = "Belum login. Login dengan password untuk membuka edit, profil, dan pengaturan password.";
-    for (const id of ["pf-r1", "pf-r2", "pf-r3", "pf-r4"]) $(id).hidden = true;
+    for (const id of ["pf-r1", "pf-r2", "pf-r3", "pf-r4", "pf-r5"]) $(id).hidden = true;
     $("pf-kelola").hidden = true;
     $("pf-out").hidden = true;
     $("pf").classList.add("on");
     return;
   }
   $("pf-p").textContent = ada
-    ? "Pasangan kunci secp256k1 diturunkan dari passwordmu (SDK). Private key tidak disimpan. Ketuk nilai untuk menyalin."
+    ? "Pasangan kunci secp256k1 diturunkan dari password dan Kunci ID (SDK). Private key tidak disimpan. Ketuk nilai untuk menyalin. Isi Kunci ID yang sama di perangkat lain agar Addr-nya sama."
     : "Belum ada password. Ketuk Atur password; hash, addr, dan pub diturunkan dari password itu.";
-  for (const id of ["pf-r1", "pf-r2", "pf-r3", "pf-r4"]) $(id).hidden = !ada;
+  for (const id of ["pf-r1", "pf-r2", "pf-r3", "pf-r4", "pf-r5"]) $(id).hidden = !ada;
   $("pf-kelola").hidden = true;
   $("pf-out").hidden = !ada;
   if (ada) {
-    $("pf-hash").textContent = rec.hash; $("pf-addr").textContent = rec.addr || "-"; $("pf-pub").textContent = rec.pub || "-";
+    $("pf-hash").textContent = rec.hash; $("pf-addr").textContent = rec.addr || "-"; $("pf-pub").textContent = rec.pub || "-"; $("pf-salt").textContent = rec.salt || "-";
     $("pf-akun").textContent = "Memeriksa…";
     tampilAkun(rec);
   }
@@ -369,7 +381,7 @@ $("pf-out").addEventListener("click", async () => {
   setKunci(true);
   note("Kamu sudah keluar");
 });
-for (const id of ["pf-hash", "pf-addr", "pf-pub"]) $(id).addEventListener("click", async () => {
+for (const id of ["pf-hash", "pf-addr", "pf-pub", "pf-salt"]) $(id).addEventListener("click", async () => {
   const t = $(id).textContent;
   if (!t || t === "-") return;
   await salin(t);

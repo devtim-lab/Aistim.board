@@ -123,6 +123,7 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
   <div class="pr" id="pf-r1"><b>Hash password</b><code id="pf-hash"></code></div>
   <div class="pr" id="pf-r2"><b>Addr</b><code id="pf-addr"></code></div>
   <div class="pr" id="pf-r3"><b>Pub (terkompresi)</b><code id="pf-pub"></code></div>
+  <div class="pr" id="pf-r5"><b>Kunci ID (rahasia)</b><code id="pf-salt"></code></div>
   <div class="pr" id="pf-r4"><b>Akun terdaftar</b><code id="pf-akun" style="cursor:default"></code></div>
   <div class="row"><button id="pf-login" type="button" class="pri" hidden>Login</button><button id="pf-pw" type="button">Atur password</button><button id="pf-kelola" type="button" hidden>Kelola akun</button><button id="pf-out" type="button" class="danger" hidden>Keluar</button><button id="pf-close" type="button">Tutup</button></div>
 </div></div>
@@ -163,6 +164,8 @@ iframe{position:fixed;inset:0;width:100%;height:100%;border:0}
   <input id="pw-old" type="password" placeholder="Password saat ini" autocomplete="current-password" autocapitalize="off" hidden>
   <input id="pw-new" type="password" placeholder="Password baru (minimal 4 karakter)" autocomplete="new-password" autocapitalize="off">
   <input id="pw-new2" type="password" placeholder="Ulangi password baru" autocomplete="new-password" autocapitalize="off">
+  <input id="pw-key" type="password" placeholder="Kunci ID (opsional)" autocomplete="off" autocapitalize="off" spellcheck="false">
+  <p id="pw-key-info">Addr dan Pub ditentukan oleh password <b>dan</b> Kunci ID. Agar Addr sama di perangkat lain, isi Kunci ID yang sama (salin dari Profil, atau pakai frasa sendiri minimal 8 karakter). Kosong: pakai Kunci ID yang sekarang, atau dibuat acak bila belum ada. Rahasiakan; bersama password, Kunci ID membuka akun ini.</p>
   <div class="row"><span id="pw-msg"></span><button id="pw-del" type="button" hidden>Hapus password</button><button id="pw-cancel" type="button">Batal</button><button id="pw-save" class="pri" type="button">Simpan</button></div>
 </div></div>
 <script src="../sdk/secp256k1.js"></script>
