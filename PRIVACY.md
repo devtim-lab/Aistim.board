@@ -28,7 +28,7 @@ Extension hanya mengambil tiga berkas data publik beserta tanda tangannya dari `
 
 ### Ikon situs (favicon Google)
 
-Ikon menu diambil otomatis dari layanan favicon Google (`https://www.google.com/s2/favicons`) untuk setiap menu yang tidak punya ikon sendiri. Yang dikirim hanya **nama domain** menu (mis. `tokopedia.com`), tanpa path, query, atau data lain, dan tanpa header Referer. Google dapat mencatat alamat IP dan informasi browser sesuai kebijakan mereka, seperti permintaan web biasa. Nama domain pribadi (tanpa titik, alamat IP, `localhost`, `.local`, `.lan`, dan sejenisnya) tidak pernah dikirim. Saat mengisi form, permintaan baru dikirim setelah kolom link selesai diisi, bukan tiap ketikan. Bila ikon sendiri (emoji atau gambar) diisi, favicon tidak diminta. Bila tidak terjangkau, ikon berupa huruf pertama nama.
+Ikon menu diambil otomatis dari layanan favicon Google (`https://www.google.com/s2/favicons`) untuk setiap menu yang tidak punya ikon sendiri. Yang dikirim hanya **nama domain induk** menu, tanpa subdomain (mis. `trial.erzap.com` menjadi `erzap.com`), tanpa path, query, atau data lain, dan tanpa header Referer. Google dapat mencatat alamat IP dan informasi browser sesuai kebijakan mereka, seperti permintaan web biasa. Nama domain pribadi (tanpa titik, alamat IP, `localhost`, `.local`, `.lan`, dan sejenisnya) tidak pernah dikirim. Saat mengisi form, permintaan baru dikirim setelah kolom link selesai diisi, bukan tiap ketikan. Bila ikon sendiri (emoji atau gambar) diisi, favicon tidak diminta. Bila tidak terjangkau, ikon berupa huruf pertama nama.
 
 ### Foto online (opsional)
 

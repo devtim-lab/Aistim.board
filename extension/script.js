@@ -274,7 +274,7 @@ function rapikanPins(daftar) {
   return hasil;
 }
 
-// Ikon otomatis: favicon dari Google (hanya nama domain yang dikirim). Nama tanpa titik, alamat IP, dan domain lokal tidak pernah dikirim.
+// Ikon otomatis: favicon dari Google (hanya nama domain induk yang dikirim, tanpa subdomain). Nama tanpa titik, alamat IP, dan domain lokal tidak pernah dikirim.
 const FAVICON = "https://www.google.com/s2/favicons?sz=64&domain=";
 const favOk = new Set(); // alamat favicon yang sudah berhasil dimuat di halaman ini
 function faviconUrl(href) {
@@ -282,7 +282,16 @@ function faviconUrl(href) {
   try { h = new URL(href).hostname.toLowerCase(); } catch (e) { return ""; }
   if (!/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z][a-z0-9-]+$/.test(h)) return "";
   if (/\.(local|localhost|internal|lan|home|corp|intranet|test|invalid|example)$/.test(h)) return "";
-  return FAVICON + encodeURIComponent(h);
+  return FAVICON + encodeURIComponent(indukDomain(h));
+}
+// Domain induk: trial.erzap.com -> erzap.com, shop.example.co.id -> example.co.id. Tanpa daftar sufiks publik lengkap:
+// akhiran negara 2 huruf yang didahului kata umum (co, com, net, org, ac, go, ...) dihitung satu akhiran.
+const SLD_UMUM = new Set(["co", "com", "net", "org", "gov", "edu", "ac", "or", "go", "sch", "web", "my", "biz", "mil", "ne", "ltd", "plc", "nom", "desa", "ponpes"]);
+function indukDomain(h) {
+  const p = h.split(".");
+  if (p.length <= 2) return h;
+  const n = p[p.length - 1].length === 2 && SLD_UMUM.has(p[p.length - 2]) ? 3 : 2;
+  return p.slice(-n).join(".");
 }
 function pinWarna(s) {
   let h = 0;
