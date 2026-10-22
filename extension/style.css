@@ -209,6 +209,16 @@ table.crud td.aksi { white-space: nowrap; }
 dialog menu[hidden] { display: none; }
 
 .gear.key { right: 62px; display: grid; place-items: center; padding: 0; }
+.upd-pill { position: fixed; top: 14px; left: 14px; z-index: 5; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border-radius: 999px; background: #2563eb; color: #fff; font-size: 13px; text-decoration: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
+.upd-pill:hover { background: #1d4ed8; }
+.upd-pill[hidden] { display: none; }
+.upd { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.15); }
+.upd-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.upd-act { display: flex; gap: 6px; }
+.upd-btn { display: inline-block; padding: 8px 14px; border: 0; border-radius: 8px; background: #334155; color: #fff; font: inherit; font-size: 14px; text-decoration: none; white-space: nowrap; cursor: pointer; }
+.upd-btn.pri { background: #2563eb; }
+.upd-btn[hidden], .upd small[hidden] { display: none; }
+.upd small { line-height: 1.4; opacity: 0.8; }
 .gear.key svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 #dlg-key { max-width: 400px; width: calc(100% - 32px); }
 #key-input { width: 100%; box-sizing: border-box; margin: 8px 0; padding: 10px; border-radius: 8px; border: 0; font: 13px ui-monospace, Menlo, Consolas, monospace; -webkit-text-security: disc; resize: none; }

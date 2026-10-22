@@ -14,6 +14,7 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 - Tampilan **Start (Aistim.icu)** bergaya Windows 8, tersimpan di dalam extension sehingga jalan tanpa internet; pilih di Pengaturan → Tampilan ("Aistim"), kembali lewat tautan di footer
 - Tile tampilan Start bisa diubah tanpa rilis: edit `data/tiles.json` lalu push ke `main`; extension mengambilnya dari GitHub saat online dan menyimpannya untuk offline
 - Pengaturan lewat tombol ⚙ di kanan atas; semua data tersimpan di `chrome.storage.local`
+- **Pembaruan** (hanya versi lengkap): Board memeriksa rilis terbaru di GitHub (`api.github.com/repos/devtim-lab/Aistim.board/releases/latest`, tanpa token dan tanpa data pribadi) saat dibuka, paling sering sekali tiap 6 jam. Bila ada versi yang lebih baru dari yang terpasang, muncul tombol **Update vX** di kiri atas, dan di **Pengaturan > Umum > Pembaruan** ada tombol **Periksa** dan **Unduh vX**. Unduhan membuka `Aistim-Board-<versi>.zip` dari halaman rilis di tab baru; extension tidak memasang apa pun sendiri. Cara memasang: ekstrak zip ke folder pemasangan yang sama, lalu muat ulang extension di halaman Ekstensi (atau pasang zipnya lagi lewat mode pengembang). ID extension tetap, jadi menu dan pengaturan tidak hilang. Nomor versi dan nama berkas dari GitHub divalidasi ketat (`vX.Y.Z`, zip harus ada di rilis) dan tautan unduhan dibangun sendiri dari nomor itu, bukan diambil dari isi balasan. Versi Web Store tidak punya fitur ini karena Chrome memperbarui sendiri.
 
 ## Struktur
 
@@ -160,6 +161,8 @@ Naikkan `version` di `extension/manifest.json` lalu push ke `main`; workflow Rel
 
 - `Aistim-Board-<versi>.zip`: versi lengkap (Load unpacked), termasuk ikon private key admin dan upload ke GitHub.
 - `Aistim-Board-store-<versi>.zip`: untuk Chrome Web Store. Dibuat oleh `tools/build-store.py`: tanpa `key` di manifest, tanpa izin `api.github.com`, tanpa fitur kunci admin dan upload/token GitHub. Semua JS ikut terkemas; tidak ada kode jarak jauh, `eval`, atau obfuscation. Yang diambil dari GitHub hanya data (`tiles.json`) dan HTML tanpa script yang tampil di iframe terisolasi.
+
+Rilis dibuat untuk setiap push ke `main` (tag `v<versi>`), jadi pemeriksaan pembaruan selalu melihat versi `manifest.json` terbaru.
 
 Kode yang hanya untuk versi lengkap diberi penanda `<!--PRO-->...<!--/PRO-->` (HTML) dan `/*PRO*/...*/PRO*/` (JS); build Web Store membuangnya dan gagal bila masih ada sisa `adminKey`, `ghToken`, atau `api.github.com`.
 
