@@ -26,7 +26,7 @@ const store = {
 };
 
 const MAX_PIN = 24;
-let pins = []; // [{ id, nama, href, ikon }]
+let pins = []; // menu pribadi: [{ id, nama, href, ikon }]
 let pinTarget = null; // id yang sedang diubah di dialog; null = menu baru
 
 function msg(text) {
@@ -193,9 +193,9 @@ function tambahTile() {
   b.addEventListener("click", () => openPin(null));
   return b;
 }
-function pinBaris(p) {
+function pinBaris(p, bersama) {
   const li = document.createElement("li");
-  li.className = "baris";
+  li.className = "baris" + (bersama ? " bersama" : "");
   const t = document.createElement("span");
   t.className = "baris-t";
   const b = document.createElement("b");
@@ -204,6 +204,14 @@ function pinBaris(p) {
   sm.textContent = hostOf(p.href) || p.href;
   t.append(b, sm);
   li.append(pinIkon(p), t);
+  if (bersama) {
+    const k = document.createElement("span");
+    k.className = "baris-lencana";
+    k.textContent = "main.json";
+    k.title = "Menu bersama dari main.json di GitHub; ubah lewat file itu";
+    li.append(k);
+    return li;
+  }
   const mk = (cls, judul, svg, fn) => {
     const x = document.createElement("button");
     x.type = "button";
@@ -224,15 +232,17 @@ function pinBaris(p) {
   return li;
 }
 function renderPins() {
+  const sendiri = new Set(pins.map((p) => p.id)); // link yang sama dengan menu pribadi hanya ditampilkan sekali
+  const semua = [...pinsV.filter((p) => !sendiri.has(p.id)).map((p) => [p, true]), ...pins.map((p) => [p, false])];
   const g = $("pin-grid");
   g.textContent = "";
-  pins.forEach((p) => g.append(pinTile(p)));
+  semua.forEach(([p]) => g.append(pinTile(p)));
   if (pins.length < MAX_PIN) g.append(tambahTile());
   const l = $("pin-list");
   l.textContent = "";
-  pins.forEach((p) => l.append(pinBaris(p)));
-  l.hidden = !pins.length;
-  $("pin-kosong").hidden = pins.length > 0;
+  semua.forEach(([p, bersama]) => l.append(pinBaris(p, bersama)));
+  l.hidden = !semua.length;
+  $("pin-kosong").hidden = semua.length > 0;
   const penuh = pins.length >= MAX_PIN;
   $("pin-tambah").disabled = penuh;
   $("pin-tambah").textContent = penuh ? "Maksimal " + MAX_PIN + " menu" : "+ Tambah menu";
@@ -240,8 +250,21 @@ function renderPins() {
 
 // Kartu berbalik: depan = menu untuk dibuka, belakang = atur (tambah, ubah, hapus)
 const flipKartu = $("flip");
+// Tinggi kartu mengikuti sisi yang sedang tampil (kedua sisi tetap setinggi isinya masing-masing)
+function ukurKartu() {
+  const h = $(flipKartu.classList.contains("balik") ? "face-belakang" : "face-depan").offsetHeight;
+  if (h > 0) $("flip-in").style.setProperty("--h", h + "px");
+}
+if (typeof ResizeObserver !== "undefined") {
+  const ro = new ResizeObserver(ukurKartu);
+  ro.observe($("face-depan"));
+  ro.observe($("face-belakang"));
+}
+window.addEventListener("resize", ukurKartu);
+ukurKartu();
 function putar(belakang) {
   flipKartu.classList.toggle("balik", belakang);
+  ukurKartu();
   $("btn-flip").setAttribute("aria-expanded", String(belakang));
   if (belakang) $("pin-tambah").focus({ preventScroll: true });
   else setTimeout(() => $("btn-flip").focus({ preventScroll: true }), 320); // sisi depan baru terlihat setelah setengah putaran
@@ -349,6 +372,97 @@ $("pin-del").addEventListener("click", async () => {
   if (r === true) dlgPin.close();
   else if (typeof r === "string") $("pin-err").textContent = r;
 });
+
+// ---------- Menu bersama: main.json di GitHub ----------
+// File main.json di repo (cabang main) diedit lewat GitHub dan tampil sebagai menu bersama untuk semua yang memasang
+// extension ini. Hanya dibaca dan divalidasi ketat (hanya link http/https, tampil sebagai teks biasa). Tidak ada tanda
+// tangan, jadi siapa pun yang boleh mengubah file itu di repo ikut menentukan menunya.
+const MENU_URL = "https://raw.githubusercontent.com/devtim-lab/Aistim.board/main/main.json";
+const MENU_JEDA = 5 * 60 * 1000; // GitHub menyimpan salinan file mentah sampai 5 menit
+const MAX_V = 48;
+let pinsV = []; // menu bersama dari main.json: [{ id, nama, href, ikon }]
+let sumber = { t: 0, err: "", lewat: [], ada: true, memuat: false }; // keadaan pemuatan terakhir
+
+// Mengurai isi main.json. Galat fatal dilempar (pesan bahasa Indonesia); entri yang salah dilewati dan dicatat di `lewat`.
+function bacaMenu(teks) {
+  if (teks.length > 100000) throw new Error("berkasnya terlalu besar");
+  let j;
+  try { j = JSON.parse(teks); } catch (e) { throw new Error("bukan JSON yang sah (" + e.message + ")"); }
+  const daftar = Array.isArray(j) ? j : j && Array.isArray(j.menu) ? j.menu : null;
+  if (!daftar) throw new Error('harus berisi daftar "menu"');
+  const items = [], lewat = [], ada = new Set();
+  daftar.forEach((x, i) => {
+    const no = "#" + (i + 1);
+    const o = x && typeof x === "object" ? x : null;
+    const href = o ? normalUrl(typeof o.link === "string" ? o.link : typeof o.href === "string" ? o.href : "") : null;
+    if (!href) return lewat.push(no + " link kosong atau tidak valid");
+    const id = idLink(href);
+    if (ada.has(id)) return lewat.push(no + " link sama dengan menu sebelumnya");
+    if (items.length >= MAX_V) return lewat.push(no + " melebihi batas " + MAX_V + " menu");
+    ada.add(id);
+    items.push({ id, nama: typeof o.nama === "string" ? o.nama.trim().slice(0, 30) : "", href, ikon: typeof o.ikon === "string" ? grafem(o.ikon, 2) : "" });
+  });
+  return { items, lewat };
+}
+function tampilSumber() {
+  const tm = sumber.t ? new Date(sumber.t).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) : "";
+  let s;
+  if (sumber.memuat) s = "Memuat main.json…";
+  else if (sumber.err) s = "Gagal memuat main.json: " + sumber.err + "." + (pinsV.length ? " Memakai salinan terakhir." : "");
+  else if (!sumber.ada) s = "main.json belum ada di repo.";
+  else if (!sumber.t) s = "";
+  else if (!pinsV.length && !sumber.lewat.length) s = "main.json belum berisi menu.";
+  else s = "Menu bersama dari main.json: " + pinsV.length + " item" + (tm ? " · diperbarui " + tm : "") + ".";
+  if (!sumber.memuat && !sumber.err && sumber.lewat.length) s += " Dilewati " + sumber.lewat.length + ": " + sumber.lewat.slice(0, 3).join("; ") + (sumber.lewat.length > 3 ? "; …" : "") + ".";
+  $("sumber-info").textContent = s;
+  $("sumber-segar").disabled = sumber.memuat;
+}
+// Tanpa paksa: dilewati bila pemuatan terakhir berhasil kurang dari 5 menit lalu. Dengan paksa (tombol Segarkan) memakai
+// parameter acak supaya salinan 5 menit di GitHub terlewati dan hasil edit langsung terlihat.
+async function muatMenuBersama(paksa) {
+  if (sumber.memuat) return;
+  if (!paksa && !sumber.err && sumber.t && Date.now() - sumber.t < MENU_JEDA) return;
+  sumber.memuat = true;
+  tampilSumber();
+  const ctl = new AbortController();
+  const batas = setTimeout(() => ctl.abort(), 10000);
+  try {
+    const r = await fetch(MENU_URL + (paksa ? "?t=" + Date.now() : ""), { cache: "no-cache", signal: ctl.signal });
+    if (r.status === 404) {
+      pinsV = [];
+      sumber = { ...sumber, ada: false, err: "", lewat: [], t: Date.now() };
+    } else {
+      if (!r.ok) throw new Error(r.status === 403 || r.status === 429 ? "GitHub membatasi permintaan, coba lagi nanti" : "GitHub membalas " + r.status);
+      const { items, lewat } = bacaMenu((await r.text()).replace(/^\uFEFF/, ""));
+      pinsV = items;
+      sumber = { ...sumber, ada: true, err: "", lewat, t: Date.now() };
+    }
+    try { await store.set("menuV", { t: sumber.t, ada: sumber.ada, items: pinsV, lewat: sumber.lewat }); } catch (e) {}
+  } catch (e) {
+    sumber.err = e && e.name === "AbortError" ? "waktu habis" : e && e.name === "TypeError" ? "tidak ada koneksi" : e && e.message ? e.message : "gagal";
+    // Galat ikut disimpan: setelah muat ulang pesannya tetap terlihat dan pemuatan dicoba lagi sampai berhasil
+    try { await store.set("menuV", { t: sumber.t, ada: sumber.ada, items: pinsV, lewat: sumber.lewat, err: sumber.err }); } catch (e2) {}
+  } finally {
+    clearTimeout(batas);
+    sumber.memuat = false;
+    tampilSumber();
+    renderPins();
+  }
+}
+// Salinan terakhir yang berhasil dimuat dipakai dulu (offline, dan supaya tile tampil tanpa menunggu jaringan)
+async function muatCacheMenu() {
+  const c = await store.get("menuV", null);
+  if (!c || typeof c !== "object") return;
+  pinsV = rapikanPins(c.items).slice(0, MAX_V);
+  sumber = {
+    t: typeof c.t === "number" ? c.t : 0,
+    err: typeof c.err === "string" ? c.err.slice(0, 200) : "",
+    lewat: Array.isArray(c.lewat) ? c.lewat.filter((x) => typeof x === "string").slice(0, 10).map((x) => x.slice(0, 120)) : [],
+    ada: c.ada !== false,
+    memuat: false,
+  };
+}
+$("sumber-segar").addEventListener("click", () => muatMenuBersama(true));
 
 // ---------- Jam dan kata-kata ----------
 const QUOTES = [
@@ -494,9 +608,12 @@ async function mulai() {
   if (JSON.stringify(pins) !== JSON.stringify(tersimpan)) {
     try { await store.set("pins", pins); } catch (e) {}
   }
+  try { await muatCacheMenu(); } catch (e) {}
   renderPins();
+  tampilSumber();
   labelVersi();
   pantau();
+  muatMenuBersama(false); // tidak ditunggu: halaman sudah tampil dengan salinan tersimpan
   muatPembaruan();
 }
 mulai().catch((e) => msg("Gagal memuat menu: " + (e && e.message ? e.message : e)));

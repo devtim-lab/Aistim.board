@@ -8,6 +8,22 @@ Versi lama (Aistim Board dengan jam, kutipan, Aistim.sync, dan menu bersama bert
 
 - **Jam dan kata-kata** (kartu atas): jam 24 jam yang berganti tepat di pergantian menit, tanggal dalam bahasa Indonesia, dan satu kata-kata per hari (berganti tiap tengah malam menurut jam di perangkatmu). Semuanya dihitung di browser, tanpa jaringan.
 - **Tambah**: ketuk tile **+** (lingkaran dengan tanda plus tipis, tanpa teks; ukuran dan warnanya sama dengan tile tambah di tab baru Brave), isi **Link** (dan **Nama** bila mau; kosong berarti nama situsnya), lalu Simpan. Link tanpa `https://` dilengkapi otomatis; hanya `http`/`https` yang diterima. Maksimal 24 menu.
+- **Menu bersama dari `main.json`**: menu juga diambil dari file [`main.json`](main.json) di repo ini, jadi cukup **edit file itu lewat GitHub** (buka `main.json`, ikon pensil, ubah, Commit) dan menunya berubah untuk semua yang memasang extension. Menu bersama tampil lebih dulu, lalu menu pribadi (yang kamu tambah lewat tile **+**). Di sisi belakang kartu (**Atur**) menu bersama diberi lencana `main.json` dan tidak bisa diubah atau dihapus dari sana; ada keterangan status dan tombol **Segarkan**.
+
+  ```json
+  {
+    "menu": [
+      { "nama": "Erzap", "link": "https://erzap.com" },
+      { "nama": "Trial", "link": "trial.erzap.com", "ikon": "🛒" },
+      { "link": "contoh.co.id/halaman" }
+    ]
+  }
+  ```
+
+  - `link` wajib (`https://` boleh dilewati; hanya `http`/`https`). `nama` boleh kosong (dipakai nama situs). `ikon` opsional (emoji atau huruf; kosong berarti favicon situs). Maksimal 48 menu. Kunci lain di file (mis. `petunjuk`) diabaikan. Larik langsung `[ ... ]` juga diterima.
+  - Entri yang salah (tanpa link, link bukan `http`/`https`, link kembar) dilewati dan alasannya ditulis di status; file yang bukan JSON sah (mis. koma berlebih di akhir) ditolak seluruhnya dengan pesan galat, dan tab tetap memakai salinan terakhir yang berhasil.
+  - Tab membaca file saat dibuka, paling sering sekali tiap 5 menit (GitHub sendiri menyimpan salinan file mentah sampai 5 menit). Tombol **Segarkan** menembus salinan itu supaya hasil edit langsung terlihat. Salinan terakhir disimpan di browser untuk dipakai offline.
+  - **Keamanan**: file ini tidak ditandatangani, jadi siapa pun yang bisa mengubah `main.json` di repo menentukan menu semua pengguna. Karena itu isinya divalidasi ketat (hanya link `http`/`https`, ditampilkan sebagai teks biasa, tidak pernah dijalankan sebagai kode) dan link hanya terbuka bila pengguna mengetuknya. Jaga akses tulis ke repo ini.
 - **Buka**: ketuk tile membuka link di **tab baru**; halaman menu tetap terbuka.
 - **Ubah dan hapus** ada di sisi belakang kartu: ketuk **Atur** (kartu berbalik), lalu **Ubah** atau **Hapus** per baris (hapus meminta konfirmasi), **Selesai** atau Escape untuk kembali. Sisi depan tidak punya tombol edit.
 - **Ikon otomatis** dari favicon situs lewat Google. Yang dikirim hanya nama **domain induk** (`trial.erzap.com` menjadi `erzap.com`, `shop.example.co.id` menjadi `example.co.id`), tanpa subdomain, path, atau query, dan baru setelah kolom link selesai diisi. Host pribadi (tanpa titik, alamat IP, `localhost`, `.local`, `.lan`, dan sejenisnya) tidak pernah dikirim. Bila gagal dimuat dipakai huruf pertama nama. Di **Ikon sendiri (opsional)** bisa diisi emoji atau huruf sebagai ganti favicon.
@@ -38,10 +54,11 @@ Memperbarui: bila muncul tombol **Versi baru … Unduh**, ketuk untuk mengunduh;
 
 ## Data
 
-Menu tersimpan di browser (`chrome.storage.local`, kunci `pins`: `id`, `nama`, `href`, `ikon`). Tidak ada akun dan tidak ada server. Lihat [PRIVACY.md](PRIVACY.md).
+Menu pribadi tersimpan di browser (`chrome.storage.local`, kunci `pins`: `id`, `nama`, `href`, `ikon`); salinan terakhir menu bersama di kunci `menuV`. Tidak ada akun dan tidak ada server. Lihat [PRIVACY.md](PRIVACY.md).
 
 ## Struktur
 
 - `extension/`: `manifest.json`, `newtab.html`, `script.js`, `style.css`, `icons/`
+- `main.json`: daftar menu bersama (diedit lewat GitHub; perubahannya tidak memicu rilis baru)
 - `tools/id-extension.py`: pemeriksa ID tetap
 - `.github/workflows/release.yml`: setiap push ke `main` membuat atau memperbarui release `v<versi>` dengan `Aistim-Tab-<versi>.zip` (naikkan `version` di `manifest.json` untuk rilis baru)

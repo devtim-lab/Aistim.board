@@ -24,7 +24,7 @@
     <section class="pins" aria-label="Menu">
       <!-- Kartu berbalik: depan = menu untuk dibuka, belakang = atur (ubah, hapus, tambah) -->
       <div id="flip" class="flip">
-        <div class="flip-in">
+        <div id="flip-in" class="flip-in">
           <div id="face-depan" class="face depan">
             <div class="pins-head">
               <h2>Menu</h2>
@@ -39,6 +39,10 @@
             </div>
             <p id="pin-kosong" class="pins-kosong" hidden>Belum ada menu.</p>
             <ul id="pin-list" class="pin-list"></ul>
+            <div class="sumber">
+              <small id="sumber-info" role="status"></small>
+              <button id="sumber-segar" class="pins-btn" type="button">Segarkan</button>
+            </div>
             <button id="pin-tambah" class="pin-tambah" type="button">+ Tambah menu</button>
             <div class="upd">
               <div class="upd-baris">

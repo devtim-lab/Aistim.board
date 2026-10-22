@@ -29,12 +29,14 @@ body {
 .quote blockquote { margin: 0; font-size: 16px; font-style: italic; line-height: 1.45; }
 .quote figcaption { margin-top: 6px; font-size: 13px; opacity: 0.7; }
 
-/* Kartu berbalik: depan = menu, belakang = atur. Kedua sisi menempati sel grid yang sama, jadi tinggi kartu mengikuti yang lebih tinggi. */
+/* Kartu berbalik: depan = menu, belakang = atur. Kedua sisi menempati sel grid yang sama; tinggi kartu (--h, diatur script.js)
+   mengikuti sisi yang sedang tampil, jadi sisi depan tidak ikut setinggi sisi belakang yang lebih panjang. */
 .flip { perspective: 1400px; }
-.flip-in { display: grid; grid-template-columns: minmax(0, 1fr); transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.3, 0.7, 0.2, 1); }
+.flip-in { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; height: var(--h, auto); transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.3, 0.7, 0.2, 1), height 0.55s cubic-bezier(0.3, 0.7, 0.2, 1); }
 .flip.balik .flip-in { transform: rotateY(180deg); }
 .face {
   grid-area: 1 / 1;
+  align-self: start;
   min-width: 0;
   padding: clamp(14px, 4vw, 20px);
   border-radius: 20px;
@@ -110,6 +112,11 @@ body {
 .ico2 svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .ico2:hover { background: rgba(255, 255, 255, 0.15); opacity: 1; }
 .ico2.hapus:hover { background: rgba(185, 28, 28, 0.6); }
+.baris-lencana { flex: none; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); font-size: 11px; opacity: 0.85; }
+.sumber { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+.sumber small { flex: 1; min-width: 0; font-size: 12px; line-height: 1.35; opacity: 0.75; overflow-wrap: anywhere; }
+.sumber .pins-btn { flex: none; min-height: 28px; padding: 3px 12px; font-size: 12px; }
+.sumber .pins-btn:disabled { opacity: 0.5; cursor: default; }
 .pin-tambah { width: 100%; padding: 11px; border: 2px dashed rgba(255, 255, 255, 0.4); border-radius: 10px; background: none; color: #fff; font: inherit; font-size: 14px; cursor: pointer; }
 .pin-tambah:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
 .pin-tambah:disabled { opacity: 0.5; cursor: not-allowed; }
