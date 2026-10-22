@@ -1,6 +1,6 @@
 # Kebijakan Privasi Aistim Board
 
-Terakhir diperbarui: 21 Oktober 2026
+Terakhir diperbarui: 22 Oktober 2026
 
 Aistim Board adalah extension Chrome yang menggantikan halaman tab baru dengan dashboard (jam, menu pintasan, tampilan Aistim, Aistim.sync, dan tampilan buatan sendiri).
 
@@ -13,7 +13,7 @@ Aistim Board **tidak mengumpulkan, mengirim, menjual, atau membagikan data priba
 Semua berikut hanya tersimpan di browser ini (`chrome.storage.local` dan `localStorage`) dan tidak pernah dikirim ke mana pun:
 
 - pengaturan (nama sapaan, format jam, latar);
-- menu pintasan di Board (nama, link, dan ikon yang kamu isi sendiri; ikon gambar disimpan sebagai data kecil di browser, tidak diunduh dari internet);
+- menu pintasan di Board (nama, link, dan ikon yang kamu isi sendiri; ikon gambar disimpan sebagai data kecil di browser, tidak diunduh dari internet; id menu hanya turunan dari link dan tidak dikirim ke mana pun);
 - daftar tugas dari versi lama, bila ada (sudah tidak ditampilkan);
 - HTML tampilan Aistim.sync dan tampilan buatan sendiri yang kamu tulis atau impor;
 - riwayat chat di tampilan Aistim (balasan dibuat lokal);
@@ -25,6 +25,10 @@ Menghapus extension atau datanya dari pengaturan browser menghapus semuanya. Pas
 ## Koneksi jaringan
 
 Extension hanya mengambil tiga berkas data publik beserta tanda tangannya dari `https://raw.githubusercontent.com/devtim-lab/Aistim.board/` (`data/tiles.json`, `data/sync.html`, `data/menu.json`, dan berkas `.sig`-nya). `data/menu.json` berisi daftar menu bersama (nama, link, ikon) yang tampil di kartu Menu untuk semua pengguna. Permintaan ini tidak membawa data pribadimu. Seperti permintaan web biasa, GitHub dapat mencatat alamat IP dan informasi browser sesuai kebijakan privasi GitHub. Data hanya dipakai bila tanda tangannya cocok dengan kunci publik yang tertanam di extension.
+
+### Ikon situs (favicon Google)
+
+Ikon menu diambil otomatis dari layanan favicon Google (`https://www.google.com/s2/favicons`) untuk setiap menu yang tidak punya ikon sendiri. Yang dikirim hanya **nama domain** menu (mis. `tokopedia.com`), tanpa path, query, atau data lain, dan tanpa header Referer. Google dapat mencatat alamat IP dan informasi browser sesuai kebijakan mereka, seperti permintaan web biasa. Nama domain pribadi (tanpa titik, alamat IP, `localhost`, `.local`, `.lan`, dan sejenisnya) tidak pernah dikirim. Saat mengisi form, permintaan baru dikirim setelah kolom link selesai diisi, bukan tiap ketikan. Bila ikon sendiri (emoji atau gambar) diisi, favicon tidak diminta. Bila tidak terjangkau, ikon berupa huruf pertama nama.
 
 ### Foto online (opsional)
 

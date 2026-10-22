@@ -229,12 +229,69 @@ function grafem(s, n) {
   return Array.from(s).slice(0, n).join("");
 }
 function pinLabel(p) { return p.nama || hostOf(p.href); }
+// ID tetap: diturunkan dari link (tanpa skema, "www.", garis miring akhir, dan #bagian), jadi sama di semua perangkat
+// dan link yang sama tidak mungkin tampil dobel. Hash 53-bit (cyrb53), bukan untuk keamanan.
+function kunciLink(href) {
+  try {
+    const u = new URL(href);
+    return u.hostname.replace(/^www\./, "").toLowerCase() + (u.port ? ":" + u.port : "") + u.pathname.replace(/\/+$/, "") + u.search;
+  } catch (e) {
+    return String(href || "");
+  }
+}
+function idLink(href) {
+  const s = kunciLink(href);
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return "m" + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+// Menu lama (id acak, bisa dobel) dirapikan: id dari link, link sama digabung, data yang kosong dilengkapi dari duplikatnya.
+function rapikanPins(daftar) {
+  const hasil = [];
+  const ada = new Map();
+  for (const x of Array.isArray(daftar) ? daftar : []) {
+    const href = x && typeof x.href === "string" ? normalUrl(x.href) : null;
+    if (!href) continue;
+    const id = idLink(href);
+    const p = { id, nama: typeof x.nama === "string" ? x.nama : "", href, ikon: typeof x.ikon === "string" ? x.ikon : "", gambar: typeof x.gambar === "string" ? x.gambar : "", bagi: !!x.bagi };
+    const d = ada.get(id);
+    if (!d) {
+      ada.set(id, p);
+      hasil.push(p);
+    } else {
+      d.nama = d.nama || p.nama;
+      d.ikon = d.ikon || p.ikon;
+      d.gambar = d.gambar || p.gambar;
+      d.bagi = d.bagi || p.bagi;
+    }
+  }
+  return hasil;
+}
+
+// Ikon otomatis: favicon dari Google (hanya nama domain yang dikirim). Nama tanpa titik, alamat IP, dan domain lokal tidak pernah dikirim.
+const FAVICON = "https://www.google.com/s2/favicons?sz=64&domain=";
+const favOk = new Set(); // alamat favicon yang sudah berhasil dimuat di halaman ini
+function faviconUrl(href) {
+  let h = "";
+  try { h = new URL(href).hostname.toLowerCase(); } catch (e) { return ""; }
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z][a-z0-9-]+$/.test(h)) return "";
+  if (/\.(local|localhost|internal|lan|home|corp|intranet|test|invalid|example)$/.test(h)) return "";
+  return FAVICON + encodeURIComponent(h);
+}
 function pinWarna(s) {
   let h = 0;
   for (const c of s || "") h = (h * 31 + c.codePointAt(0)) >>> 0;
   return "hsl(" + (h % 360) + " 55% 40%)";
 }
-function pinIkon(p) {
+// Urutan ikon: gambar sendiri, emoji/huruf sendiri, favicon situs, huruf pertama nama. Favicon baru dipasang setelah
+// berhasil dimuat, jadi saat offline atau gagal tetap tampil huruf berwarna.
+function pinIkon(p, favicon = true) {
   const s = document.createElement("span");
   s.className = "pin-ic";
   if (p.gambar) {
@@ -242,9 +299,29 @@ function pinIkon(p) {
     im.src = p.gambar;
     im.alt = "";
     s.append(im);
-  } else {
-    s.textContent = p.ikon || grafem(pinLabel(p), 1).toUpperCase() || "•";
-    s.style.background = pinWarna(hostOf(p.href) || p.nama);
+    return s;
+  }
+  s.textContent = p.ikon || grafem(pinLabel(p), 1).toUpperCase() || "•";
+  if (p.ikon) return s;
+  s.style.background = pinWarna(hostOf(p.href) || p.nama);
+  const fu = favicon ? faviconUrl(p.href) : "";
+  if (fu) {
+    const im = new Image();
+    im.alt = "";
+    im.decoding = "async";
+    im.referrerPolicy = "no-referrer";
+    const pasang = () => {
+      s.textContent = "";
+      s.style.background = "";
+      s.classList.add("fav");
+      s.append(im);
+    };
+    im.onload = () => {
+      favOk.add(fu);
+      pasang();
+    };
+    im.src = fu;
+    if (favOk.has(fu)) pasang(); // sudah pernah berhasil di halaman ini: langsung tampil, tanpa berkedip jadi huruf
   }
   return s;
 }
@@ -285,7 +362,16 @@ function validMenu(m) {
   );
 }
 function bersihMenu(m) {
-  return m.map((x, i) => ({ id: "b" + i, nama: x.nama.trim(), href: normalUrl(x.href), ikon: x.ikon || "", gambar: x.gambar || "" }));
+  const lihat = new Set();
+  const hasil = [];
+  for (const x of m) {
+    const href = normalUrl(x.href);
+    const id = idLink(href);
+    if (lihat.has(id)) continue; // link yang sama dalam satu daftar hanya sekali
+    lihat.add(id);
+    hasil.push({ id, nama: x.nama.trim(), href, ikon: x.ikon || "", gambar: x.gambar || "" });
+  }
+  return hasil;
 }
 async function refreshMenuBersama() {
   try {
@@ -312,8 +398,8 @@ function renderPins() {
   const g = $("pin-grid");
   g.textContent = "";
   g.classList.toggle("atur", pinAtur);
-  const sendiri = new Set(pins.map((p) => p.href)); // link yang sama dengan menu pribadi hanya ditampilkan sekali
-  pinsV.filter((p) => !sendiri.has(p.href)).forEach((p) => g.append(pinTile(p, true)));
+  const sendiri = new Set(pins.map((p) => p.id)); // link yang sama dengan menu pribadi hanya ditampilkan sekali
+  pinsV.filter((p) => !sendiri.has(p.id)).forEach((p) => g.append(pinTile(p, true)));
   pins.forEach((p) => g.append(pinTile(p, false)));
   if (pins.length < MAX_PIN) {
     const b = document.createElement("button");
@@ -339,10 +425,14 @@ function formPin() {
   const href = normalUrl($("pin-url").value);
   return { href: href || "", nama: $("pin-nama").value.trim().slice(0, 30), ikon: grafem($("pin-ikon").value, 2), gambar: pinGambar, bagi: pinAdmin && $("pin-bagi").checked };
 }
+// Favicon di pratinjau baru diminta setelah kolom link selesai diisi (event "change"), bukan tiap ketikan,
+// supaya potongan nama domain yang masih diketik tidak ikut dikirim ke Google.
+let pinFav = false;
 function previewPin() {
   const p = formPin();
-  $("pin-preview").replaceWith(Object.assign(pinIkon(p), { id: "pin-preview" }));
+  $("pin-preview").replaceWith(Object.assign(pinIkon(p, pinFav), { id: "pin-preview" }));
   $("pin-img-clear").hidden = !pinGambar;
+  $("pin-nama").placeholder = p.href ? "Kosong: " + hostOf(p.href) : "Kosong: pakai nama situs";
 }
 
 function openPin(id) {
@@ -353,16 +443,26 @@ function openPin(id) {
   $("pin-nama").value = p ? p.nama : "";
   $("pin-ikon").value = p ? p.ikon : "";
   pinGambar = p ? p.gambar : "";
+  pinFav = !!p; // menu yang sudah ada punya link lengkap; menu baru menunggu link selesai diisi
+  $("pin-lain").open = !!(p && (p.ikon || p.gambar));
   $("pin-bagi-row").hidden = !pinAdmin;
   $("pin-bagi").checked = !!(p && p.bagi);
   $("pin-del").hidden = !p;
   $("pin-err").textContent = "";
   previewPin();
   dlgPin.showModal();
-  $("pin-url").focus();
+  (p ? $("pin-url") : $("pin-nama")).focus();
 }
 
-["pin-url", "pin-nama", "pin-ikon"].forEach((id) => $(id).addEventListener("input", previewPin));
+$("pin-url").addEventListener("input", () => {
+  pinFav = false;
+  previewPin();
+});
+$("pin-url").addEventListener("change", () => {
+  pinFav = true;
+  previewPin();
+});
+["pin-nama", "pin-ikon"].forEach((id) => $(id).addEventListener("input", previewPin));
 $("btn-pin-edit").addEventListener("click", () => {
   pinAtur = !pinAtur;
   renderPins();
@@ -408,16 +508,24 @@ $("pin-img").addEventListener("change", async (e) => {
   }
 });
 
+let pinSimpan = false; // ketukan ganda pada Simpan tidak menyimpan dua kali
 $("form-pin").addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (pinSimpan) return;
   const data = formPin();
   if (!data.href) return ($("pin-err").textContent = "Link tidak valid (harus http:// atau https://).");
+  const id = idLink(data.href);
+  const kembar = pins.find((x) => x.id === id && x.id !== pinTarget);
+  if (kembar) return ($("pin-err").textContent = 'Link ini sudah ada di menu: "' + pinLabel(kembar) + '".');
   if (!pinTarget && pins.length >= MAX_PIN) return ($("pin-err").textContent = "Maksimal " + MAX_PIN + " menu.");
-  const next = pinTarget ? pins.map((x) => (x.id === pinTarget ? { ...x, ...data } : x)) : [...pins, { id: Date.now().toString(36), ...data }];
+  const next = pinTarget ? pins.map((x) => (x.id === pinTarget ? { ...x, ...data, id } : x)) : [...pins, { id, ...data }];
+  pinSimpan = true;
   try {
     await store.set("pins", next);
   } catch (err) {
     return ($("pin-err").textContent = "Gagal menyimpan: " + (err && err.message ? err.message : err));
+  } finally {
+    pinSimpan = false;
   }
   pins = next;
   dlgPin.close();
@@ -487,8 +595,8 @@ async function salin(t) {
 
 $("btn-pin-bagi").addEventListener("click", () => {
   const list = daftarBagi();
-  const href = new Set(list.map((x) => x.href));
-  const hapus = pinsV.filter((p) => !href.has(p.href)).map((p) => p.nama);
+  const ids = new Set(list.map((x) => idLink(x.href)));
+  const hapus = pinsV.filter((p) => !ids.has(p.id)).map((p) => p.nama);
   let info = list.length
     ? list.length + " menu akan dibagikan ke semua pengguna: " + list.map((x) => x.nama).join(", ") + "."
     : "Belum ada menu bertanda Bagikan; menerbitkan akan mengosongkan menu bersama.";
@@ -942,9 +1050,12 @@ async function startBoard() {
   initQuote();
   applyBackground();
   const pn = await store.get("pins", []);
-  pins = Array.isArray(pn) ? pn.filter((x) => x && typeof x.href === "string") : [];
+  pins = rapikanPins(pn);
+  if (JSON.stringify(pins) !== JSON.stringify(Array.isArray(pn) ? pn : [])) {
+    try { await store.set("pins", pins); } catch (e) {} // menyimpan hasil rapi: id tetap, tanpa duplikat
+  }
   const pv = await store.get("pinsV", []); // salinan terverifikasi terakhir, agar tampil juga saat offline
-  pinsV = validMenu(pv) ? pv : [];
+  pinsV = validMenu(pv) ? bersihMenu(pv) : [];
   try {
     const sp = await store.get("syncPass", null);
     pinAdmin = !!(sp && sp.pub && typeof AistimVerify !== "undefined" && sp.pub === AistimVerify.PUB);

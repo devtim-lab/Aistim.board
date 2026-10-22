@@ -8,7 +8,7 @@ Extension Chrome sederhana yang mengganti halaman tab baru dengan dashboard prib
 - Sapaan sesuai waktu, dengan nama Anda (opsional)
 - Kutipan harian
 - Latar: berganti tiap hari, pilih warna, atau gambar sendiri (otomatis diperkecil)
-- Kartu **Menu**: pintasan ke situs favorit. Tombol **+** membuka form Link, Nama (opsional), dan Ikon (emoji/huruf, atau gambar sendiri yang otomatis dipotong persegi dan diperkecil); tanpa ikon dipakai huruf pertama nama. Link tanpa `https://` dilengkapi otomatis; hanya `http`/`https` yang diterima. Tombol ✎ di kartu masuk ke mode atur: ketuk menu untuk mengubah atau menghapusnya. Maksimal 24 menu, tersimpan di perangkat (`chrome.storage.local`, kunci `pins`)
+- Kartu **Menu**: pintasan ke situs favorit. Tombol **+** membuka form Nama (opsional; kosong berarti nama situs) lalu Link. Ikon diambil otomatis dari favicon situs lewat Google (`https://www.google.com/s2/favicons`, hanya nama domain yang dikirim, dan baru setelah kolom link selesai diisi); host pribadi (tanpa titik, alamat IP, `localhost`, `.local`, `.lan`, dan sejenisnya) tidak pernah dikirim. Bila gagal dimuat (offline atau tidak ada) dipakai huruf pertama nama. Di bagian **Ikon sendiri (opsional)** bisa diisi emoji/huruf atau gambar yang otomatis dipotong persegi dan diperkecil; itu dipakai sebagai ganti favicon. Link tanpa `https://` dilengkapi otomatis; hanya `http`/`https` yang diterima. Tombol ✎ di kartu masuk ke mode atur: ketuk menu untuk mengubah atau menghapusnya. Maksimal 24 menu, tersimpan di perangkat (`chrome.storage.local`, kunci `pins`). **ID tetap**: tiap menu punya id yang diturunkan dari link (tanpa skema, `www.`, huruf besar/kecil pada nama situs, `/` di akhir, dan `#bagian`), jadi sama di semua perangkat dan link yang sama tidak bisa tampil dobel: menambah link yang sudah ada ditolak, ketukan ganda pada Simpan hanya menyimpan sekali, dan data lama yang sudah dobel digabung saat Board dibuka. Menu bersama dan menu pribadi dengan link yang sama hanya tampil sekali (yang pribadi)
 - **Menu bersama**: menu yang tampil di semua pengguna, dikelola admin lewat `data/menu.json` (lihat bagian Menu bersama)
 - Daftar tugas dari versi lama sudah tidak ditampilkan; datanya (`todos`) tidak dihapus dari browser
 - Tampilan **Start (Aistim.icu)** bergaya Windows 8, tersimpan di dalam extension sehingga jalan tanpa internet; pilih di Pengaturan → Tampilan ("Aistim"), kembali lewat tautan di footer
@@ -66,6 +66,8 @@ Format (maksimal 24 menu; `ikon` dan `gambar` opsional):
 
 - `href`: link `http`/`https`. `nama`: maksimal 30 karakter. `ikon`: emoji atau 1–2 huruf; kosong berarti huruf pertama nama.
 - `gambar`: opsional, data URL PNG (`data:image/png;base64,...`, maksimal 60.000 karakter) sebagai ganti ikon. Gambar dari menu pribadi (kotak 96x96) bisa dipakai.
+- Ikon: `gambar`, lalu `ikon`, lalu favicon situs (Google), lalu huruf pertama nama.
+- ID tidak ditulis di berkas: pengguna menurunkannya dari `href` (aturan yang sama dengan menu pribadi), sehingga tidak bergantung pada urutan. Dua entri dengan link yang sama hanya tampil sekali.
 - Satu entri yang tidak valid membuat seluruh daftar ditolak, supaya data setengah rusak tidak tampil.
 
 Menerbitkan, dua cara. Perubahan sampai ke pengguna saat mereka membuka tab baru (cache GitHub bisa beberapa menit).
