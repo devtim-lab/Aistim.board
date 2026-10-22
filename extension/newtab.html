@@ -25,14 +25,30 @@
     </section>
 
     <section class="pins">
-      <div class="pins-head">
-        <h2>Menu</h2>
-        <div class="pins-act">
-          <button id="btn-pin-bagi" class="pins-bagi" type="button" title="Terbitkan menu bersama ke semua pengguna" hidden>Terbitkan</button>
-          <button id="btn-pin-edit" class="pins-edit" type="button" title="Atur menu" aria-label="Atur menu" aria-pressed="false" hidden>✎</button>
+      <div id="flip" class="flip">
+        <div class="flip-in">
+          <div class="face depan" id="face-depan">
+            <div class="pins-head">
+              <h2>Menu</h2>
+              <button id="btn-flip" class="pins-btn" type="button" title="Atur menu (balik kartu)" aria-expanded="false" aria-controls="face-belakang">Atur <span aria-hidden="true">⟲</span></button>
+            </div>
+            <div id="pin-grid" class="pin-grid"></div>
+            <p id="pin-kosong" class="pins-kosong" hidden>Belum ada menu. Ketuk Atur untuk menambah.</p>
+          </div>
+          <div class="face belakang" id="face-belakang">
+            <div class="pins-head">
+              <h2>Atur menu</h2>
+              <div class="pins-act">
+                <button id="btn-pin-bagi" class="pins-btn" type="button" title="Terbitkan menu bersama ke semua pengguna" hidden>Terbitkan</button>
+                <button id="btn-flip-balik" class="pins-btn pri" type="button">Selesai <span aria-hidden="true">⟲</span></button>
+              </div>
+            </div>
+            <ul id="pin-list" class="pin-list"></ul>
+            <p id="pin-bagi-info" class="pins-info" hidden><span class="titik" aria-hidden="true"></span> ikut dibagikan ke semua pengguna saat Terbitkan</p>
+            <button id="pin-tambah" class="pin-tambah" type="button">+ Tambah menu</button>
+          </div>
         </div>
       </div>
-      <div id="pin-grid" class="pin-grid"></div>
       <p id="board-msg" class="msg" role="status"></p>
     </section>
   </main>

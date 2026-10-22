@@ -29,32 +29,53 @@ body {
 .quote p { margin: 0 0 6px; font-size: 18px; font-style: italic; }
 .quote small { opacity: 0.75; }
 
-.pins {
-  width: 100%;
-  max-width: 460px;
-  padding: 16px;
+.pins { width: 100%; max-width: 460px; --ic: 52px; }
+/* Kartu Menu berbalik: depan = menu, belakang = atur. Kedua sisi menempati sel grid yang sama, jadi tinggi kartu mengikuti yang lebih tinggi. */
+.flip { perspective: 1400px; }
+.flip-in { display: grid; grid-template-columns: minmax(0, 1fr); transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.3, 0.7, 0.2, 1); }
+.flip.balik .flip-in { transform: rotateY(180deg); }
+.face {
+  grid-area: 1 / 1;
+  min-width: 0;
+  padding: clamp(12px, 4vw, 20px);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.35);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transition: visibility 0s linear 0.3s; /* sisi yang tertutup disembunyikan setelah setengah putaran: tidak bisa difokus atau diketuk */
 }
-.pins-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.face.belakang { display: flex; flex-direction: column; transform: rotateY(180deg); visibility: hidden; }
+.flip.balik .belakang { visibility: visible; transition-delay: 0s; }
+.flip.balik .depan { visibility: hidden; }
+.pins-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; min-height: 34px; }
 .pins-head h2 { margin: 0; font-size: 16px; }
-.pins-edit {
-  width: 32px;
-  height: 32px;
-  border: 0;
-  border-radius: 50%;
-  background: none;
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  opacity: 0.6;
-}
-.pins-edit:hover, .pins-edit[aria-pressed="true"] { opacity: 1; background: rgba(255, 255, 255, 0.15); }
-.pins-edit[hidden] { display: none; }
-.pins-act { display: flex; align-items: center; gap: 6px; }
-.pins-bagi { padding: 5px 12px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px; background: none; color: #fff; font-size: 12px; cursor: pointer; }
-.pins-bagi:hover { background: rgba(255, 255, 255, 0.15); }
-.pins-bagi[hidden] { display: none; }
+.pins-act { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.pins-btn { min-height: 32px; padding: 5px 14px; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 999px; background: none; color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.pins-btn:hover { background: rgba(255, 255, 255, 0.15); }
+.pins-btn.pri { background: #2563eb; border-color: #2563eb; }
+.pins-btn.pri:hover { background: #1d4ed8; }
+.pins-btn[hidden] { display: none; }
+.pins-kosong { margin: 0; padding: 18px 0 8px; text-align: center; font-size: 14px; opacity: 0.75; }
+.pins-kosong[hidden], .pin-grid[hidden], .pins-info[hidden] { display: none; }
+.pins-info { margin: 0 0 10px; font-size: 12px; opacity: 0.7; }
+.titik { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #60a5fa; vertical-align: middle; }
+.pin-list { flex: 1; display: flex; flex-direction: column; gap: 6px; max-height: clamp(180px, 38vh, 300px); margin: 0 0 12px; padding: 0 2px 0 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; } /* daftar panjang digulir di dalam kartu, supaya kartu tidak jauh lebih tinggi dari sisi depan */
+.baris { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); }
+.baris .pin-ic { --ic: 40px; font-size: 19px; border-radius: 11px; }
+.baris-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.baris-t b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 500; }
+.baris-t small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: 0.65; }
+.baris-lencana { flex: none; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); font-size: 11px; opacity: 0.85; }
+.ico2 { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border: 0; border-radius: 50%; background: none; color: #fff; cursor: pointer; opacity: 0.8; }
+.ico2 svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ico2:hover { background: rgba(255, 255, 255, 0.15); opacity: 1; }
+.ico2.hapus:hover { background: rgba(185, 28, 28, 0.6); }
+.pin-tambah { width: 100%; padding: 11px; border: 2px dashed rgba(255, 255, 255, 0.4); border-radius: 10px; background: none; color: #fff; font: inherit; font-size: 14px; cursor: pointer; }
+.pin-tambah:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
+.pin-tambah:disabled { opacity: 0.5; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { .flip-in, .face { transition: none; } }
+@media (min-width: 768px) { .pins { max-width: 600px; --ic: 56px; } .pin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; max-height: 260px; } }
+@media (max-width: 360px) { .pins { --ic: 46px; } .pin-grid { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); gap: 10px 4px; } }
 .pin { position: relative; }
 .pin.dibagi::after { content: ""; position: absolute; top: 2px; right: calc(50% - 31px); width: 11px; height: 11px; border-radius: 50%; background: #60a5fa; border: 2px solid #1f2937; }
 
@@ -79,8 +100,8 @@ body {
   display: grid;
   place-items: center;
   flex: none;
-  width: 52px;
-  height: 52px;
+  width: var(--ic, 52px);
+  height: var(--ic, 52px);
   border-radius: 14px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.15);
@@ -92,8 +113,6 @@ body {
 .pin-ic.fav { background: rgba(255, 255, 255, 0.92); }
 .pin-ic.fav img { width: 62%; height: 62%; object-fit: contain; }
 .pin-nm { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; opacity: 0.9; }
-.pin-add .pin-ic { background: none; border: 2px dashed rgba(255, 255, 255, 0.4); font-size: 28px; font-weight: 300; }
-.pin-grid.atur .pin:not(.pin-add):not(.bersama) .pin-ic { outline: 2px dashed rgba(255, 255, 255, 0.75); outline-offset: 2px; }
 
 /* ---- v0.2 ---- */
 .gear {

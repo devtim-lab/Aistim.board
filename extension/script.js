@@ -194,7 +194,6 @@ const MAX_PIN = 24;
 let pins = []; // menu pribadi: [{ id, nama, href, ikon, gambar }]
 let pinsV = []; // menu bersama dari admin (data/menu.json, sudah diverifikasi tanda tangannya); hanya baca
 let pinAdmin = false; // true bila profil Aistim.sync di browser ini adalah admin yang public key-nya tertanam (verify.js)
-let pinAtur = false; // mode atur: ketuk menu untuk mengubah atau menghapus
 let pinTarget = null; // id yang sedang diubah di dialog; null = menu baru
 let pinGambar = ""; // data URL gambar ikon yang dipilih di dialog
 
@@ -347,13 +346,67 @@ function pinTile(p, bersama) {
   nm.className = "pin-nm";
   nm.textContent = pinLabel(p);
   a.append(pinIkon(p), nm);
-  a.addEventListener("click", (e) => {
-    if (!pinAtur) return;
-    e.preventDefault();
-    if (bersama) msg("Menu bersama dari admin, tidak bisa diubah di sini.");
-    else openPin(p.id);
-  });
   return a;
+}
+const IKON_UBAH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></svg>';
+const IKON_HAPUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>';
+// Baris di sisi belakang kartu: menu pribadi punya Ubah dan Hapus; menu bersama dari admin hanya dibaca
+function pinBaris(p, bersama) {
+  const li = document.createElement("li");
+  li.className = "baris" + (bersama ? " bersama" : "");
+  const t = document.createElement("span");
+  t.className = "baris-t";
+  const b = document.createElement("b");
+  b.textContent = pinLabel(p);
+  if (!bersama && p.bagi) {
+    const d = document.createElement("span");
+    d.className = "titik";
+    d.title = "Ikut dibagikan ke semua pengguna saat Terbitkan";
+    b.append(" ", d);
+  }
+  const sm = document.createElement("small");
+  sm.textContent = hostOf(p.href) || p.href;
+  t.append(b, sm);
+  li.append(pinIkon(p), t);
+  if (bersama) {
+    const k = document.createElement("span");
+    k.className = "baris-lencana";
+    k.textContent = "Bersama";
+    k.title = "Menu bersama dari admin, tidak bisa diubah di sini";
+    li.append(k);
+    return li;
+  }
+  const mk = (cls, judul, svg, fn) => {
+    const x = document.createElement("button");
+    x.type = "button";
+    x.className = "ico2 " + cls;
+    x.title = judul + " " + pinLabel(p);
+    x.setAttribute("aria-label", x.title);
+    x.innerHTML = svg;
+    x.addEventListener("click", fn);
+    return x;
+  };
+  li.append(
+    mk("ubah", "Ubah", IKON_UBAH, () => openPin(p.id)),
+    mk("hapus", "Hapus", IKON_HAPUS, async () => {
+      const r = await hapusPin(p);
+      if (typeof r === "string") msg(r);
+    })
+  );
+  return li;
+}
+// Menghapus menu pribadi setelah konfirmasi. Hasil: true = terhapus, false = dibatalkan, teks = alasan gagal
+async function hapusPin(p) {
+  if (!(await popup({ judul: "Hapus menu", teks: 'Hapus menu "' + pinLabel(p) + '"?', ok: "Hapus", bahaya: true }))) return false;
+  const next = pins.filter((x) => x.id !== p.id);
+  try {
+    await store.set("pins", next);
+  } catch (err) {
+    return "Gagal menghapus: " + (err && err.message ? err.message : err);
+  }
+  pins = next;
+  renderPins();
+  return true;
 }
 
 // ---- Menu bersama: data/menu.json di GitHub, dipakai hanya bila tanda tangan admin cocok (menu/verify.js) ----
@@ -402,33 +455,37 @@ async function refreshMenuBersama() {
 }
 
 function renderPins() {
-  if (!pins.length) pinAtur = false;
-  $("btn-pin-edit").hidden = !pins.length;
-  $("btn-pin-edit").setAttribute("aria-pressed", String(pinAtur));
   $("btn-pin-bagi").hidden = !pinAdmin;
+  const sendiri = new Set(pins.map((p) => p.id)); // link yang sama dengan menu pribadi hanya ditampilkan sekali
+  const semua = [...pinsV.filter((p) => !sendiri.has(p.id)).map((p) => [p, true]), ...pins.map((p) => [p, false])];
   const g = $("pin-grid");
   g.textContent = "";
-  g.classList.toggle("atur", pinAtur);
-  const sendiri = new Set(pins.map((p) => p.id)); // link yang sama dengan menu pribadi hanya ditampilkan sekali
-  pinsV.filter((p) => !sendiri.has(p.id)).forEach((p) => g.append(pinTile(p, true)));
-  pins.forEach((p) => g.append(pinTile(p, false)));
-  if (pins.length < MAX_PIN) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "pin pin-add";
-    b.title = "Tambah menu";
-    b.setAttribute("aria-label", "Tambah menu");
-    const ic = document.createElement("span");
-    ic.className = "pin-ic";
-    ic.textContent = "+";
-    const nm = document.createElement("span");
-    nm.className = "pin-nm";
-    nm.textContent = "Tambah";
-    b.append(ic, nm);
-    b.addEventListener("click", () => openPin(null));
-    g.append(b);
-  }
+  semua.forEach(([p, bersama]) => g.append(pinTile(p, bersama)));
+  $("pin-kosong").hidden = semua.length > 0;
+  g.hidden = !semua.length;
+  const l = $("pin-list");
+  l.textContent = "";
+  semua.forEach(([p, bersama]) => l.append(pinBaris(p, bersama)));
+  $("pin-bagi-info").hidden = !(pinAdmin && pins.some((p) => p.bagi));
+  const penuh = pins.length >= MAX_PIN;
+  $("pin-tambah").disabled = penuh;
+  $("pin-tambah").textContent = penuh ? "Maksimal " + MAX_PIN + " menu" : "+ Tambah menu";
 }
+
+// Kartu Menu berbalik: depan = menu untuk dibuka, belakang = atur (tambah, ubah, hapus, terbitkan)
+const flipKartu = $("flip");
+function putar(belakang) {
+  flipKartu.classList.toggle("balik", belakang);
+  $("btn-flip").setAttribute("aria-expanded", String(belakang));
+  if (belakang) $("pin-tambah").focus({ preventScroll: true });
+  else setTimeout(() => $("btn-flip").focus({ preventScroll: true }), 320); // sisi depan baru terlihat setelah setengah putaran
+}
+$("btn-flip").addEventListener("click", () => putar(true));
+$("btn-flip-balik").addEventListener("click", () => putar(false));
+$("pin-tambah").addEventListener("click", () => openPin(null));
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && flipKartu.classList.contains("balik") && !document.querySelector("dialog[open]")) putar(false);
+});
 
 const dlgPin = $("dlg-pin");
 
@@ -474,10 +531,6 @@ $("pin-url").addEventListener("change", () => {
   previewPin();
 });
 ["pin-nama", "pin-ikon"].forEach((id) => $(id).addEventListener("input", previewPin));
-$("btn-pin-edit").addEventListener("click", () => {
-  pinAtur = !pinAtur;
-  renderPins();
-});
 $("pin-cancel").addEventListener("click", () => dlgPin.close());
 $("pin-img-btn").addEventListener("click", () => $("pin-img").click());
 $("pin-img-clear").addEventListener("click", () => {
@@ -546,16 +599,9 @@ $("form-pin").addEventListener("submit", async (e) => {
 $("pin-del").addEventListener("click", async () => {
   const p = pins.find((x) => x.id === pinTarget);
   if (!p) return;
-  if (!(await popup({ judul: "Hapus menu", teks: 'Hapus menu "' + pinLabel(p) + '"?', ok: "Hapus", bahaya: true }))) return;
-  const next = pins.filter((x) => x.id !== p.id);
-  try {
-    await store.set("pins", next);
-  } catch (err) {
-    return ($("pin-err").textContent = "Gagal menghapus: " + (err && err.message ? err.message : err));
-  }
-  pins = next;
-  dlgPin.close();
-  renderPins();
+  const r = await hapusPin(p);
+  if (r === true) dlgPin.close();
+  else if (typeof r === "string") $("pin-err").textContent = r;
 });
 
 // ---------- Terbitkan menu bersama (admin) ----------
