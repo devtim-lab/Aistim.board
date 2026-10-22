@@ -12,12 +12,22 @@ body {
 .halaman {
   min-height: 100vh;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: clamp(16px, 8vh, 96px) 16px 24px;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: clamp(16px, 5vh, 56px) 16px 24px;
 }
 
-.pins { width: 100%; max-width: 460px; --ic: 56px; }
+.jam, .pins { width: 100%; max-width: 460px; }
+.pins { --ic: 44px; }
+
+/* Kartu atas: jam dan kata-kata */
+.jam { padding: 18px 20px 20px; border-radius: 20px; background: rgba(0, 0, 0, 0.35); text-align: center; }
+.clock { font-size: clamp(52px, 17vw, 72px); font-weight: 300; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.date { margin-top: 4px; font-size: 15px; opacity: 0.85; }
+.quote { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, 0.14); }
+.quote blockquote { margin: 0; font-size: 16px; font-style: italic; line-height: 1.45; }
+.quote figcaption { margin-top: 6px; font-size: 13px; opacity: 0.7; }
 
 /* Kartu berbalik: depan = menu, belakang = atur. Kedua sisi menempati sel grid yang sama, jadi tinggi kartu mengikuti yang lebih tinggi. */
 .flip { perspective: 1400px; }
@@ -27,7 +37,7 @@ body {
   grid-area: 1 / 1;
   min-width: 0;
   padding: clamp(14px, 4vw, 20px);
-  border-radius: 16px;
+  border-radius: 20px;
   background: rgba(0, 0, 0, 0.35);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
@@ -74,17 +84,20 @@ body {
   border-radius: 50%;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.15);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   line-height: 1;
 }
 .pin-ic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pin-ic.fav { background: rgba(255, 255, 255, 0.92); }
 .pin-ic.fav img { width: 58%; height: 58%; object-fit: contain; }
-.pin-ic.plus { background: rgba(240, 242, 250, 0.95); color: #1f2937; }
-.pin-ic.plus svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+/* Tile "+": ukuran dan warna sama dengan tile tambah di halaman tab baru Brave (lingkaran 44px, + tipis 21px, tanpa teks) */
+.pin.tambah { padding-top: 6px; }
+.pin.tambah:hover { background: none; }
+.pin.tambah:hover .pin-ic { filter: brightness(0.94); }
+.pin-ic.plus { background: #ededf7; color: #43464d; }
+.pin-ic.plus svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.35; }
 .pin-nm { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; opacity: 0.92; }
-.pin.tambah .pin-nm { white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; font-size: 12px; line-height: 1.25; }
 
 /* Sisi belakang: daftar dengan Ubah dan Hapus */
 .pin-list { flex: 1; display: flex; flex-direction: column; gap: 6px; max-height: clamp(180px, 38vh, 300px); margin: 0 0 12px; padding: 0 2px 0 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
@@ -134,10 +147,9 @@ dialog button[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) { .flip-in, .face { transition: none; } }
 @media (min-width: 768px) {
-  .pins { max-width: 600px; --ic: 60px; }
+  .jam, .pins { max-width: 600px; }
   .pin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; max-height: 260px; }
 }
 @media (max-width: 360px) {
-  .pins { --ic: 48px; }
   .pin-grid { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 10px 4px; }
 }

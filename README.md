@@ -1,12 +1,13 @@
 # Aistim Tab
 
-Extension Chrome yang mengganti halaman **tab baru** dengan satu kartu **Menu**: pintasan ke situs yang sering dibuka, dengan tile **+ Tambahkan baru** untuk menambah menu.
+Extension Chrome yang mengganti halaman **tab baru** dengan dua kartu: **jam dan kata-kata** di atas, lalu kartu **Menu** berisi pintasan ke situs yang sering dibuka, dengan tile **+** untuk menambah menu.
 
 Versi lama (Aistim Board dengan jam, kutipan, Aistim.sync, dan menu bersama bertanda tangan) ada di branch [`main-v1`](../../tree/main-v1).
 
 ## Fitur
 
-- **Tambah**: ketuk tile **+ Tambahkan baru**, isi **Link** (dan **Nama** bila mau; kosong berarti nama situsnya), lalu Simpan. Link tanpa `https://` dilengkapi otomatis; hanya `http`/`https` yang diterima. Maksimal 24 menu.
+- **Jam dan kata-kata** (kartu atas): jam 24 jam yang berganti tepat di pergantian menit, tanggal dalam bahasa Indonesia, dan satu kata-kata per hari (berganti tiap tengah malam menurut jam di perangkatmu). Semuanya dihitung di browser, tanpa jaringan.
+- **Tambah**: ketuk tile **+** (lingkaran dengan tanda plus tipis, tanpa teks; ukuran dan warnanya sama dengan tile tambah di tab baru Brave), isi **Link** (dan **Nama** bila mau; kosong berarti nama situsnya), lalu Simpan. Link tanpa `https://` dilengkapi otomatis; hanya `http`/`https` yang diterima. Maksimal 24 menu.
 - **Buka**: ketuk tile membuka link di **tab baru**; halaman menu tetap terbuka.
 - **Ubah dan hapus** ada di sisi belakang kartu: ketuk **Atur** (kartu berbalik), lalu **Ubah** atau **Hapus** per baris (hapus meminta konfirmasi), **Selesai** atau Escape untuk kembali. Sisi depan tidak punya tombol edit.
 - **Ikon otomatis** dari favicon situs lewat Google. Yang dikirim hanya nama **domain induk** (`trial.erzap.com` menjadi `erzap.com`, `shop.example.co.id` menjadi `example.co.id`), tanpa subdomain, path, atau query, dan baru setelah kolom link selesai diisi. Host pribadi (tanpa titik, alamat IP, `localhost`, `.local`, `.lan`, dan sejenisnya) tidak pernah dikirim. Bila gagal dimuat dipakai huruf pertama nama. Di **Ikon sendiri (opsional)** bisa diisi emoji atau huruf sebagai ganti favicon.

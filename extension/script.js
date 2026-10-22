@@ -161,7 +161,8 @@ function pinIkon(p, favicon = true) {
 }
 
 // ---------- Tampilan ----------
-const PLUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+// Tanda + tipis (21 dari 44 px, tebal 1,35 px) tanpa ujung membulat, sama dengan tile tambah di tab baru Brave
+const PLUS = '<svg viewBox="0 0 44 44" aria-hidden="true"><path d="M11.7 22h20.6M22 11.7v20.6"/></svg>';
 const IKON_UBAH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM14 6l4 4"/></svg>';
 const IKON_HAPUS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg>';
 
@@ -183,13 +184,12 @@ function tambahTile() {
   b.type = "button";
   b.className = "pin tambah";
   b.id = "pin-tile-tambah";
+  b.title = "Tambahkan menu baru";
+  b.setAttribute("aria-label", "Tambahkan menu baru"); // tanpa teks yang terlihat; hanya untuk pembaca layar
   const ic = document.createElement("span");
   ic.className = "pin-ic plus";
   ic.innerHTML = PLUS;
-  const nm = document.createElement("span");
-  nm.className = "pin-nm";
-  nm.textContent = "Tambahkan baru";
-  b.append(ic, nm);
+  b.append(ic);
   b.addEventListener("click", () => openPin(null));
   return b;
 }
@@ -350,6 +350,37 @@ $("pin-del").addEventListener("click", async () => {
   else if (typeof r === "string") $("pin-err").textContent = r;
 });
 
+// ---------- Jam dan kata-kata ----------
+const QUOTES = [
+  { text: "Mulailah dari mana kamu berada, gunakan apa yang kamu punya.", author: "Arthur Ashe" },
+  { text: "Langkah kecil setiap hari lebih baik daripada lompatan besar sesekali.", author: "Anonim" },
+  { text: "Fokus pada kemajuan, bukan kesempurnaan.", author: "Anonim" },
+  { text: "Kerjakan yang penting dulu, sisanya menyusul.", author: "Anonim" },
+  { text: "Konsistensi mengalahkan intensitas.", author: "Anonim" },
+  { text: "Sedikit demi sedikit, lama-lama menjadi bukit.", author: "Peribahasa" },
+  { text: "Hari ini adalah kesempatan baru untuk memulai.", author: "Anonim" },
+  { text: "Tenang, satu langkah saja dulu.", author: "Anonim" },
+  { text: "Yang dirapikan hari ini memudahkan besok.", author: "Anonim" },
+  { text: "Istirahat juga bagian dari bekerja.", author: "Anonim" },
+];
+// Jam 24 jam, diperbarui tepat di pergantian menit (dan saat tab kembali terlihat)
+function tick() {
+  const now = new Date();
+  $("clock").textContent = now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  $("date").textContent = now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  clearTimeout(tick.t);
+  tick.t = setTimeout(tick, 60000 - (now.getTime() % 60000) + 50);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) tick(); });
+// Satu kata-kata per hari (hari menurut jam lokal), berganti tiap tengah malam
+function initQuote() {
+  const d = new Date();
+  const hari = Math.floor((d.getTime() - d.getTimezoneOffset() * 60000) / 86400000);
+  const q = QUOTES[hari % QUOTES.length];
+  $("quote-text").textContent = "“" + q.text + "”";
+  $("quote-author").textContent = q.author;
+}
+
 // ---------- Mulai ----------
 // Perubahan dari tab lain (tab baru kedua yang terbuka) ikut tampil, supaya simpan dari tab lama tidak menimpa data baru.
 function dariLuar(nilai) {
@@ -377,6 +408,8 @@ function labelVersi() {
   }
 }
 async function mulai() {
+  tick();
+  initQuote();
   const tersimpan = await store.get("pins", []);
   pins = rapikanPins(tersimpan);
   if (JSON.stringify(pins) !== JSON.stringify(tersimpan)) {
