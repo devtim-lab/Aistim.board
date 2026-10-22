@@ -340,6 +340,8 @@ function pinTile(p, bersama) {
   a.className = "pin" + (bersama ? " bersama" : "") + (!bersama && p.bagi ? " dibagi" : "");
   if (!bersama && p.bagi) a.title = p.href + " (dibagikan ke semua pengguna saat diterbitkan)";
   a.href = p.href;
+  a.target = "_blank"; // dibuka di tab baru; Board tetap terbuka
+  a.rel = "noopener noreferrer";
   if (!a.title) a.title = p.href;
   const nm = document.createElement("span");
   nm.className = "pin-nm";
