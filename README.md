@@ -11,6 +11,7 @@ Versi lama (Aistim Board dengan jam, kutipan, Aistim.sync, dan menu bersama bert
 - **Buka**: ketuk tile membuka link di **tab baru**; halaman menu tetap terbuka.
 - **Ubah dan hapus** ada di sisi belakang kartu: ketuk **Atur** (kartu berbalik), lalu **Ubah** atau **Hapus** per baris (hapus meminta konfirmasi), **Selesai** atau Escape untuk kembali. Sisi depan tidak punya tombol edit.
 - **Ikon otomatis** dari favicon situs lewat Google. Yang dikirim hanya nama **domain induk** (`trial.erzap.com` menjadi `erzap.com`, `shop.example.co.id` menjadi `example.co.id`), tanpa subdomain, path, atau query, dan baru setelah kolom link selesai diisi. Host pribadi (tanpa titik, alamat IP, `localhost`, `.local`, `.lan`, dan sejenisnya) tidak pernah dikirim. Bila gagal dimuat dipakai huruf pertama nama. Di **Ikon sendiri (opsional)** bisa diisi emoji atau huruf sebagai ganti favicon.
+- **Pembaruan**: saat tab dibuka (paling sering sekali tiap 6 jam) extension memeriksa rilis terbaru di GitHub (`api.github.com/repos/devtim-lab/Aistim.board/releases/latest`, tanpa token, tanpa cookie, tanpa data pribadi). Bila ada versi yang lebih baru dari yang terpasang, muncul tombol biru **Versi baru vX tersedia · Unduh** di atas kartu jam; ketuk untuk mengunduh `Aistim-Tab-<versi>.zip` di tab baru. Di sisi belakang kartu (**Atur**) ada tombol **Periksa pembaruan**, tombol **Unduh vX**, dan kotak **Periksa otomatis saat tab dibuka** untuk mematikan pemeriksaan otomatis (pemeriksaan manual tetap bisa). Extension tidak memasang apa pun sendiri: ekstrak zip ke folder yang sama lalu tekan ⟳ di halaman Ekstensi. Nomor versi dari GitHub divalidasi ketat (`vX.Y.Z`, zip harus ada di rilis) dan tautan unduhan dibangun dari nomor itu, bukan diambil dari isi balasan. Tidak butuh izin situs: GitHub mengizinkan permintaan lintas-asal untuk API-nya.
 - **Responsif**: 320 px sampai desktop; mengikuti `prefers-reduced-motion`.
 - Perubahan di satu tab baru ikut tampil di tab baru lain yang sedang terbuka.
 
@@ -33,7 +34,7 @@ ID ini juga tampil di sisi belakang kartu (Atur). Data menu tersimpan per ID, ja
 2. Buka `chrome://extensions`, aktifkan **Mode pengembang**, pilih **Load unpacked**, dan tunjuk folder hasil ekstrak (yang berisi `manifest.json`).
 3. Buka tab baru.
 
-Memperbarui: ekstrak zip versi baru ke folder yang sama, lalu tekan ikon muat ulang (⟳) pada kartu extension.
+Memperbarui: bila muncul tombol **Versi baru … Unduh**, ketuk untuk mengunduh; ekstrak zip versi baru ke folder yang sama, lalu tekan ikon muat ulang (⟳) pada kartu extension.
 
 ## Data
 

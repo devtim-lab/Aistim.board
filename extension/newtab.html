@@ -8,6 +8,9 @@
 </head>
 <body>
   <main class="halaman">
+    <!-- Muncul hanya bila ada versi yang lebih baru di GitHub -->
+    <a id="upd-pill" class="upd-pill" href="#" target="_blank" rel="noopener noreferrer" hidden><span aria-hidden="true">⬆</span><span id="upd-pill-teks"></span></a>
+
     <!-- Kartu atas: jam dan kata-kata -->
     <section class="jam" aria-label="Jam dan kata-kata">
       <div id="clock" class="clock">00.00</div>
@@ -37,6 +40,15 @@
             <p id="pin-kosong" class="pins-kosong" hidden>Belum ada menu.</p>
             <ul id="pin-list" class="pin-list"></ul>
             <button id="pin-tambah" class="pin-tambah" type="button">+ Tambah menu</button>
+            <div class="upd">
+              <div class="upd-baris">
+                <button id="upd-cek" class="pins-btn" type="button">Periksa pembaruan</button>
+                <a id="upd-unduh" class="pins-btn pri" href="#" target="_blank" rel="noopener noreferrer" hidden>Unduh</a>
+              </div>
+              <small id="upd-info" role="status"></small>
+              <small id="upd-cara" hidden>Ekstrak zip ke folder yang sama, lalu tekan ⟳ pada kartu extension di halaman Ekstensi. Menu tidak hilang.</small>
+              <label class="upd-auto"><input id="upd-auto" type="checkbox" checked> Periksa otomatis saat tab dibuka</label>
+            </div>
             <small id="ver" class="ver"></small>
           </div>
         </div>

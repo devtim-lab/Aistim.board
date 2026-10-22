@@ -1,6 +1,6 @@
 "use strict";
 // Aistim Tab: halaman tab baru berisi menu pintasan (tambah, ubah, hapus). Tanpa akun, tanpa server:
-// data tersimpan di browser ini; satu-satunya permintaan jaringan adalah ikon favicon (lihat PRIVACY.md).
+// data tersimpan di browser ini. Permintaan jaringan hanya dua: ikon favicon Google dan pemeriksaan rilis di GitHub (lihat PRIVACY.md).
 
 const $ = (id) => document.getElementById(id);
 
@@ -381,6 +381,85 @@ function initQuote() {
   $("quote-author").textContent = q.author;
 }
 
+// ---------- Pembaruan ----------
+// Memeriksa rilis terbaru di GitHub (tanpa token, tanpa data pribadi) dan menautkan unduhan zip-nya. Tidak memasang apa pun
+// sendiri. Tautan unduhan dibangun dari nomor versi yang sudah divalidasi, bukan diambil dari isi balasan GitHub.
+const UPD_API = "https://api.github.com/repos/devtim-lab/Aistim.board/releases/latest";
+const UPD_DL = "https://github.com/devtim-lab/Aistim.board/releases/download/";
+const UPD_JEDA = 6 * 60 * 60 * 1000; // pemeriksaan otomatis paling sering tiap 6 jam
+let upd = null; // hasil pemeriksaan terakhir: { t, v, url }
+const verAngka = (v) => (typeof v === "string" && /^\d{1,4}\.\d{1,4}\.\d{1,4}$/.test(v) ? v.split(".").map(Number) : null);
+function lebihBaru(a, b) {
+  const x = verAngka(a), y = verAngka(b);
+  if (!x || !y) return false;
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i];
+  return false;
+}
+function verTerpasang() {
+  try { return chrome.runtime.getManifest().version; } catch (e) { return ""; }
+}
+const urlZip = (v) => UPD_DL + "v" + v + "/Aistim-Tab-" + v + ".zip";
+async function ambilRilis() {
+  const r = await fetch(UPD_API, { headers: { Accept: "application/vnd.github+json" }, cache: "no-cache" });
+  if (!r.ok) throw new Error(r.status === 403 || r.status === 429 ? "GitHub membatasi permintaan, coba lagi nanti." : "GitHub membalas " + r.status + ".");
+  const j = await r.json();
+  const m = /^v(\d+\.\d+\.\d+)$/.exec((j && j.tag_name) || "");
+  if (!m || !verAngka(m[1])) throw new Error("Format rilis tidak dikenali.");
+  if (!Array.isArray(j.assets) || !j.assets.some((x) => x && x.name === "Aistim-Tab-" + m[1] + ".zip")) throw new Error("Rilis v" + m[1] + " belum punya berkas zip.");
+  return { v: m[1], url: urlZip(m[1]) };
+}
+function tampilUpd() {
+  const pas = verTerpasang();
+  const baru = !!(upd && lebihBaru(upd.v, pas));
+  $("upd-pill").hidden = !baru;
+  $("upd-unduh").hidden = !baru;
+  $("upd-cara").hidden = !baru;
+  if (baru) {
+    $("upd-pill").href = upd.url;
+    $("upd-pill").title = "Unduh Aistim Tab v" + upd.v;
+    $("upd-pill-teks").textContent = "Versi baru v" + upd.v + " tersedia · Unduh";
+    $("upd-unduh").href = upd.url;
+    $("upd-unduh").textContent = "Unduh v" + upd.v;
+    $("upd-info").textContent = "Versi baru v" + upd.v + " tersedia (terpasang v" + pas + ").";
+  } else if (upd) {
+    $("upd-info").textContent = "Sudah versi terbaru (v" + pas + "). Diperiksa " + new Date(upd.t).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }) + ".";
+  } else {
+    $("upd-info").textContent = "Terpasang v" + (pas || "?") + ". Belum diperiksa.";
+  }
+}
+// Hasil: "" = berhasil (upd diperbarui), teks = alasan gagal. Tanpa paksa: dilewati bila pemeriksaan terakhir masih baru.
+async function periksaPembaruan(paksa) {
+  if (!paksa && upd && Date.now() - upd.t < UPD_JEDA) return "";
+  try {
+    const r = await ambilRilis();
+    upd = { t: Date.now(), ...r };
+    try { await store.set("updInfo", upd); } catch (e) {}
+    return "";
+  } catch (e) {
+    return e && e.message ? e.message : "Gagal memeriksa.";
+  } finally {
+    tampilUpd();
+  }
+}
+async function muatPembaruan() {
+  const otomatis = (await store.get("updAuto", true)) !== false;
+  $("upd-auto").checked = otomatis;
+  const c = await store.get("updInfo", null);
+  if (c && typeof c.t === "number" && verAngka(c.v) && c.url === urlZip(c.v)) upd = { t: c.t, v: c.v, url: c.url };
+  tampilUpd();
+  if (otomatis) periksaPembaruan(false); // tidak ditunggu; gagal = diam saja
+}
+$("upd-cek").addEventListener("click", async () => {
+  $("upd-cek").disabled = true;
+  $("upd-info").textContent = "Memeriksa…";
+  const err = await periksaPembaruan(true);
+  if (err) $("upd-info").textContent = "Gagal memeriksa: " + err;
+  $("upd-cek").disabled = false;
+});
+$("upd-auto").addEventListener("change", async () => {
+  try { await store.set("updAuto", $("upd-auto").checked); } catch (e) { msg("Gagal menyimpan pilihan."); }
+});
+
 // ---------- Mulai ----------
 // Perubahan dari tab lain (tab baru kedua yang terbuka) ikut tampil, supaya simpan dari tab lama tidak menimpa data baru.
 function dariLuar(nilai) {
@@ -402,7 +481,7 @@ function pantau() {
 function labelVersi() {
   try {
     const v = chrome.runtime.getManifest().version;
-    $("ver").textContent = "Aistim Tab v" + v + " · ID extension: " + chrome.runtime.id;
+    $("ver").textContent = "Aistim Tab v" + v + (chrome.runtime.id ? " · ID extension: " + chrome.runtime.id : "");
   } catch (e) {
     $("ver").textContent = "Aistim Tab";
   }
@@ -418,5 +497,6 @@ async function mulai() {
   renderPins();
   labelVersi();
   pantau();
+  muatPembaruan();
 }
 mulai().catch((e) => msg("Gagal memuat menu: " + (e && e.message ? e.message : e)));
